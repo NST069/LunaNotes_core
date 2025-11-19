@@ -3,32 +3,44 @@ package com.lunanotes.model;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.io.Serializable;
 import java.time.LocalDateTime;
 
 @Entity
 @Table(name="notes")
-@Data
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Note {
+public class Note implements Serializable {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Getter @Setter
     private Long id;
 
-    private Long authorId;
+    @Getter @Setter
     private String title;
+
+    @Getter @Setter
     private String content;
+
+    @Getter @Setter
     private LocalDateTime createdAt;
+
+    @Getter @Setter
     private LocalDateTime updatedAt;
-//
-//    @PrePersist
-//    protected void onCreate(){
-//        createdAt = updatedAt = LocalDateTime.now();
-//    }
-//
-//    @PreUpdate
-//    protected void onUpdate(){
-//        updatedAt = LocalDateTime.now();
-//    }
+
+    @ManyToOne
+    @JoinColumn(name="owner_id")
+    @Getter @Setter
+    private User owner;
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate(){
+        updatedAt = LocalDateTime.now();
+    }
 }
