@@ -53,10 +53,10 @@ class NotesControllerTest {
                 .build();
         this.notes = new ArrayList<>();
         notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
-        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
+        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null));
         notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
         notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
-        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
+        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null));
     }
 
     @AfterEach
@@ -73,13 +73,26 @@ class NotesControllerTest {
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
                 .andExpect(jsonPath("$.data.title").value("test1"));
+
+        this.mockMvc.perform(get("/api/v1/notes/note-1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Find One Success"))
+                .andExpect(jsonPath("$.data.id").value("1"))
+                .andExpect(jsonPath("$.data.title").value("test1"));
     }
 
     @Test
-    void findById_NonExistingNote_ShouldReturnNull() throws Exception{
+    void findById_NonExistingNote_ShouldThrowException() throws Exception{
         given(this.notesDataService.findById("1")).willThrow(new NoteNotFoundException("1"));
 
         this.mockMvc.perform(get("/api/v1/notes/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        this.mockMvc.perform(get("/api/v1/notes/note-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -99,6 +112,24 @@ class NotesControllerTest {
                 .andExpect(jsonPath("$.data[0].title").value("test1"))
                 .andExpect(jsonPath("$.data[1].id").value("2"))
                 .andExpect(jsonPath("$.data[1].title").value("test2"));
+    }
+
+    @Test
+    void findAllNotesByUserId_ShouldReturnList() throws Exception {
+        List<Note> filteredNotes = this.notes.stream()
+                .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
+
+        given(this.notesDataService.findByOwnerId("1")).willReturn(filteredNotes);
+
+        this.mockMvc.perform(get("/api/v1/notes/user-1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Find All For User Success"))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(filteredNotes.size())))
+                .andExpect(jsonPath("$.data[0].id").value("1"))
+                .andExpect(jsonPath("$.data[0].title").value("test1"))
+                .andExpect(jsonPath("$.data[1].id").value("3"))
+                .andExpect(jsonPath("$.data[1].title").value("test3"));
     }
 
     @Test

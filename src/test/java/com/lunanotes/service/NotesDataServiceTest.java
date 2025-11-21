@@ -42,12 +42,24 @@ class NotesDataServiceTest {
     void setUp() {
         this.notes=new ArrayList<>();
 
+        User user1 = User.builder()
+                .id(1L)
+                .userName("John Doe")
+                .build();
+
         Note note1 = Note.builder()
                 .id(1L)
+                .owner(user1)
                 .title("The test note")
                 .content("Lorem ipsum dolor sit amet")
                 .build();
         Note note2 = Note.builder()
+                .id(2L)
+                .owner(user1)
+                .title("The test note")
+                .content("Lorem ipsum dolor sit amet")
+                .build();
+        Note note3 = Note.builder()
                 .id(2L)
                 .title("The test note")
                 .content("Lorem ipsum dolor sit amet")
@@ -55,6 +67,7 @@ class NotesDataServiceTest {
 
         this.notes.add(note1);
         this.notes.add(note2);
+        this.notes.add(note3);
     }
 
     @AfterEach
@@ -108,6 +121,19 @@ class NotesDataServiceTest {
 
         assertThat(result.size()).isEqualTo(this.notes.size());
         verify(notesJPARepository, times(1)).findAll();
+    }
+
+    @Test
+    void findAllNotesByUserId_ShouldReturnList() {
+        List<Note> filteredNotes = this.notes.stream()
+                .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
+
+        given(notesJPARepository.findByOwnerId(1L)).willReturn(filteredNotes);
+
+        List<Note> result = notesDataService.findByOwnerId("1");
+
+        assertThat(result.size()).isEqualTo(filteredNotes.size());
+        verify(notesJPARepository, times(1)).findByOwnerId(1L);
     }
 
     @Test

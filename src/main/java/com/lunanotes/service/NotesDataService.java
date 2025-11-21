@@ -33,6 +33,10 @@ public class NotesDataService {
         return this.notesJPARepository.findAll();
     }
 
+    public List<Note> findByOwnerId(String ownerId) {
+        return this.notesJPARepository.findByOwnerId(Long.parseLong(ownerId));
+    }
+
     public Note save(Note newNote) {
         //newNote.setId(idWorker.nextId());
         return this.notesJPARepository.save(newNote);

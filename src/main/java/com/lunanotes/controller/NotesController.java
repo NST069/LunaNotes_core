@@ -29,7 +29,7 @@ public class NotesController {
         this.noteDTOToNoteConverter = noteDTOToNoteConverter;
     }
 
-    @GetMapping(value = "/{noteId}")
+    @GetMapping(value = {"/{noteId}", "/note-{noteId}"})
     public Result findNoteById(@PathVariable String noteId) {
         Note foundNote = this.notesDataService.findById(noteId);
         NoteDTO noteDTO = this.noteToNoteDTOConverter.convert(foundNote);
@@ -42,6 +42,14 @@ public class NotesController {
         List<NoteDTO> noteDTOs = foundNotes.stream().map(this.noteToNoteDTOConverter::convert).collect(Collectors.toList());
 
         return new Result(true, HttpStatus.OK.value(), "Find All Success", noteDTOs);
+    }
+
+    @GetMapping(value = "/user-{userId}")
+    public Result findAllNotesOfUser(@PathVariable String userId) {
+        List<Note> foundNotes = this.notesDataService.findByOwnerId(userId);
+        List<NoteDTO> noteDTOs = foundNotes.stream().map(this.noteToNoteDTOConverter::convert).collect(Collectors.toList());
+
+        return new Result(true, HttpStatus.OK.value(), "Find All For User Success", noteDTOs);
     }
 
     @PostMapping
