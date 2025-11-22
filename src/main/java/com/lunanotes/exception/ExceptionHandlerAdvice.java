@@ -18,16 +18,22 @@ public class ExceptionHandlerAdvice {
 
     @ExceptionHandler(NoteNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleNoteNotFoundException(NoteNotFoundException ex){
+    Result handleNoteNotFoundException(NoteNotFoundException ex) {
+        return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(UserNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    Result handleUserNotFoundException(UserNotFoundException ex) {
         return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
-    Result handleValidationException(MethodArgumentNotValidException ex){
+    Result handleValidationException(MethodArgumentNotValidException ex) {
         List<ObjectError> errors = ex.getBindingResult().getAllErrors();
         Map<String, String> map = new HashMap<>(errors.size());
-        errors.forEach(error->{
+        errors.forEach(error -> {
             String key = ((FieldError) error).getField();
             String value = error.getDefaultMessage();
             map.put(key, value);

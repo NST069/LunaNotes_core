@@ -1,6 +1,6 @@
 package com.lunanotes.mapper;
 
-public record UserDTO(Long Id,
+public record UserDTO(long id,
                       String userName,
                       int numberOfNotes) {
 }
