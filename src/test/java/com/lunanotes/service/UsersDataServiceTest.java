@@ -85,6 +85,17 @@ class UsersDataServiceTest {
     }
 
     @Test
+    void findAll_ShouldReturnList(){
+        given(usersJPARepository.findAll()).willReturn(users);
+
+        List<User> result = usersDataService.findAll();
+
+        assertThat(result.size()).isEqualTo(users.size());
+
+        verify(usersJPARepository, times(1)).findAll();
+    }
+
+    @Test
     void saveUser_ShouldCreate() {
         User newUser = User.builder()
                 .id(1L)

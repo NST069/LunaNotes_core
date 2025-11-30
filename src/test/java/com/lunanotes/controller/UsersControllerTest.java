@@ -5,6 +5,7 @@ import com.lunanotes.exception.UserNotFoundException;
 import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UsersDataService;
+import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,6 +18,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
+import javax.print.attribute.standard.Media;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -90,6 +92,17 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void findAll_ShouldReturnList() throws Exception {
+        given(this.usersDataService.findAll()).willReturn(this.users);
+
+        this.mockMvc.perform(get("/api/v1/users").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Find All Success"))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(this.users.size())));
     }
 
     @Test

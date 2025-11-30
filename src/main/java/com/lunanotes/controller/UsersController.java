@@ -10,6 +10,8 @@ import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+import java.util.List;
+
 @RestController
 @RequestMapping("/api/v1/users")
 public class UsersController {
@@ -32,6 +34,13 @@ public class UsersController {
         User foundUser = this.usersDataService.findById(userId);
         UserDTO foundUserDTO = this.userToUserDTOConverter.convert(foundUser);
         return new Result(true, HttpStatus.OK.value(), "Find One Success", foundUserDTO);
+    }
+
+    @GetMapping
+    public Result findAll(){
+        List<User> users = this.usersDataService.findAll();
+        List<UserDTO> usersDTO = users.stream().map(userToUserDTOConverter::convert).toList();
+        return new Result(true, HttpStatus.OK.value(), "Find All Success", usersDTO);
     }
 
     @PostMapping

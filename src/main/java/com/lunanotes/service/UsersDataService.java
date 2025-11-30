@@ -7,6 +7,8 @@ import jakarta.transaction.Transactional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import java.util.List;
+
 @Service
 @Transactional
 public class UsersDataService {
@@ -21,6 +23,10 @@ public class UsersDataService {
     public User findById(String userId) {
         return this.usersJPARepository.findById(userId)
                 .orElseThrow(() -> new UserNotFoundException(userId));
+    }
+
+    public List<User> findAll(){
+        return this.usersJPARepository.findAll();
     }
 
     public User save(User user) {
