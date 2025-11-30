@@ -40,6 +40,9 @@ public class User implements Serializable {
     @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     private final List<Note> notes = new ArrayList<>();
 
+    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    private final List<Tag> tags = new ArrayList<>();
+
     public void addNote(Note note){
         note.setOwner(this);
         this.notes.add(note);
@@ -57,5 +60,9 @@ public class User implements Serializable {
 
     public int getNumberOfNotes() {
         return this.notes.size();
+    }
+
+    public int getNumberOfTags() {
+        return this.tags.size();
     }
 }

@@ -10,7 +10,8 @@ public class UserToUserDTOConverter implements Converter<User, UserDTO> {
     public UserDTO convert(User source) {
         UserDTO userDTO = new UserDTO(source.getId(),
                 source.getUserName(),
-                source.getNumberOfNotes());
+                source.getNumberOfNotes(),
+                source.getNumberOfTags());
         return userDTO;
     }
 }
