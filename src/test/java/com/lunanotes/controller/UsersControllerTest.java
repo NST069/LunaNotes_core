@@ -107,7 +107,7 @@ class UsersControllerTest {
 
     @Test
     void addUser_ShouldSave() throws Exception {
-        UserDTO userDTO = new UserDTO(0, "test", 0);
+        UserDTO userDTO = new UserDTO(0, "test", 0, 0);
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         User savedUser = new User();
@@ -130,7 +130,7 @@ class UsersControllerTest {
         updatedUser.setId(1L);
         updatedUser.setUserName("test");
 
-        UserDTO userDTO = new UserDTO(1, "test", 0);
+        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
@@ -146,7 +146,7 @@ class UsersControllerTest {
     @Test
     void updateUser_NonExistingUser_ShouldThrowException() throws Exception {
 
-        UserDTO userDTO = new UserDTO(1, "test", 0);
+        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new UserNotFoundException("1"));
