@@ -18,6 +18,7 @@ public class NoteToNoteDTOConverter implements Converter<Note,NoteDTO> {
         NoteDTO noteDTO = new NoteDTO(source.getId(),
                 source.getTitle(),
                 source.getContent(),
+                source.getNumberOfTags(),
                 source.getOwner() != null ? this.userToUserDTOConverter.convert(source.getOwner()) : null);
         return noteDTO;
     }

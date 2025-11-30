@@ -2,15 +2,19 @@ package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.exception.NoteNotFoundException;
+import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.mapper.AddMultipleTagsRequest;
+import com.lunanotes.mapper.AddTagRequest;
+import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.mapper.NoteDTO;
 import com.lunanotes.model.Note;
+import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.service.NotesDataService;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -20,9 +24,9 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
@@ -45,18 +49,22 @@ class NotesControllerTest {
 
     List<Note> notes;
 
+    List<User> users;
+
     @BeforeEach
     void setUp() {
         User user = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
                 .build();
+        this.users = new ArrayList<>();
+        this.users.add(user);
         this.notes = new ArrayList<>();
-        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
-        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null));
-        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
-        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user));
-        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null));
+        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
+        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null, new HashSet<>()));
+        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
+        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
+        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null, new HashSet<>()));
     }
 
     @AfterEach
@@ -134,7 +142,7 @@ class NotesControllerTest {
 
     @Test
     void addNote_ShouldSave() throws Exception {
-        NoteDTO noteDTO = new NoteDTO(0, "test", "lorem ipsum", null);
+        NoteDTO noteDTO = new NoteDTO(0, "test", "lorem ipsum", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
         Note savedNote = new Note();
@@ -142,7 +150,7 @@ class NotesControllerTest {
         savedNote.setTitle("test");
         savedNote.setContent("lorem ipsum");
 
-        given(this.notesDataService.save(Mockito.any(Note.class))).willReturn(savedNote);
+        given(this.notesDataService.save(any(Note.class))).willReturn(savedNote);
 
         this.mockMvc.perform(post("/api/v1/notes").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -160,10 +168,10 @@ class NotesControllerTest {
         updatedNote.setTitle("test");
         updatedNote.setContent("lorem ipsum2");
 
-        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", null);
+        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
-        given(this.notesDataService.update(eq("1"), Mockito.any(Note.class))).willReturn(updatedNote);
+        given(this.notesDataService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
 
         this.mockMvc.perform(put("/api/v1/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -177,10 +185,10 @@ class NotesControllerTest {
     @Test
     void updateNote_NonExistingNote_ShouldThrowException() throws Exception {
 
-        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", null);
+        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
-        given(this.notesDataService.update(eq("1"), Mockito.any(Note.class))).willThrow(new NoteNotFoundException("1"));
+        given(this.notesDataService.update(eq("1"), any(Note.class))).willThrow(new NoteNotFoundException("1"));
 
         this.mockMvc.perform(put("/api/v1/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -208,6 +216,178 @@ class NotesControllerTest {
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void getTags_ExistingNote_ShouldReturnTagsList() throws Exception {
+        Tag tag1 = new Tag();
+        tag1.setId(1L);
+        tag1.setName("test1");
+        tag1.setHexColor("#00FFFF");
+        Tag tag2 = new Tag();
+        tag2.setId(2L);
+        tag2.setName("test2");
+        tag2.setHexColor("#00FFFF");
+        Set<Tag> tags = Set.of(tag1,tag2);
+        notes.get(0).getTags().addAll(tags);
+
+        given(this.notesDataService.getTags("1")).willReturn(this.notes.get(0).getTags());
+
+        this.mockMvc.perform(get("/api/v1/notes/1/tags").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Get Tags Success"))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(tags.size())));
+
+        this.mockMvc.perform(get("/api/v1/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Get Tags Success"))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(tags.size())));
+    }
+
+    @Test
+    void getTags_NonExistingNote_ShouldThrowExcepton() throws Exception {
+        given(this.notesDataService.getTags("1")).willThrow(new NoteNotFoundException("1"));
+
+        this.mockMvc.perform(get("/api/v1/notes/1/tags").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
+                .andExpect(jsonPath("$.data").isEmpty());
+
+        this.mockMvc.perform(get("/api/v1/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void addTag_ExistingNote_ShouldAddTag() throws Exception{
+        Tag tag = new Tag();
+        tag.setId(1L);
+        tag.setName("test");
+        tag.setHexColor("#00FFFF");
+
+        AddTagRequest request = new AddTagRequest("1");
+        String json = this.objectMapper.writeValueAsString(request);
+
+        int tagsCount = notes.get(0).getTags().size();
+        notes.get(0).getTags().add(tag);
+
+        given(notesDataService.addTag("1", "1")).willReturn(this.notes.get(0));
+
+        mockMvc.perform(post("/api/v1/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Add Tag Success"))
+                .andExpect(jsonPath("$.data.id").value("1"))
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+1));
+    }
+
+    @Test
+    void addTag_NonExistingNote_ShouldThrowException() throws Exception{
+        AddTagRequest request = new AddTagRequest("1");
+        String json = this.objectMapper.writeValueAsString(request);
+
+        given(notesDataService.addTag("1", "1")).willThrow(new NoteNotFoundException("1"));
+
+        mockMvc.perform(post("/api/v1/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
+                .andExpect(jsonPath("$.data").isEmpty());
+    }
+
+    @Test
+    void createAndAddTag_ExistingTag_ShouldAddTag() throws Exception {
+        Tag tag = new Tag();
+        tag.setId(1L);
+        tag.setName("test");
+        tag.setHexColor("#FF0000");
+        CreateTagRequest request = new CreateTagRequest("test", "#FF0000");
+        String json = this.objectMapper.writeValueAsString(request);
+
+        int tagsCount = notes.get(0).getTags().size();
+        notes.get(0).getTags().add(tag);
+
+        given(notesDataService.createAndAddTag(eq("1"), any(CreateTagRequest.class))).willReturn(notes.get(0));
+
+        mockMvc.perform(post("/api/v1/notes/1/tags/create").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Add Tag Success"))
+                .andExpect(jsonPath("$.data.id").value("1"))
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+1));
+    }
+
+    @Test
+    void addMultipleTags_ShouldAddExistingTags() throws Exception {
+        Tag tag1 = new Tag();
+        tag1.setId(1L);
+        tag1.setName("test");
+        tag1.setHexColor("#FF0000");
+        Tag tag2 = new Tag();
+        tag2.setId(2L);
+        tag2.setName("test");
+        tag2.setHexColor("#FF0000");
+        List<Tag> tags = List.of(tag1, tag2);
+
+        AddMultipleTagsRequest request = new AddMultipleTagsRequest(List.of("1", "2"));
+        String json = this.objectMapper.writeValueAsString(request);
+
+        int tagsCount = notes.get(0).getTags().size();
+        notes.get(0).getTags().addAll(tags);
+
+        given(notesDataService.addMultipleTags("1", request.tagIds())).willReturn(notes.get(0));
+
+        mockMvc.perform(post("/api/v1/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Add Multiple Tags Success"))
+                .andExpect(jsonPath("$.data.id").value("1"))
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+tags.size()));
+    }
+
+    @Test
+    void removeTag_ExistingTag_ShouldDeleteTag() throws Exception {
+        Tag tag = new Tag();
+        tag.setId(1L);
+        tag.setName("test");
+        tag.setHexColor("#FF0000");
+
+        notes.get(0).getTags().add(tag);
+        int tagsCount = notes.get(0).getTags().size();
+
+        notes.get(0).removeTag(tag);
+
+        given(notesDataService.removeTag("1", "1")).willReturn(notes.get(0));
+
+        this.mockMvc.perform(delete("/api/v1/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(true))
+                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
+                .andExpect(jsonPath("$.message").value("Remove Tag Success"))
+                .andExpect(jsonPath("$.data.id").value("1"))
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount-1));
+    }
+
+    @Test
+    void removeTag_NonExistingTag_ShouldThrowException() throws Exception {
+        Tag tag = new Tag();
+        tag.setId(1L);
+        tag.setName("test");
+        tag.setHexColor("#FF0000");
+
+        notes.get(0).removeTag(tag);
+
+        given(notesDataService.removeTag("1", "1")).willThrow(new TagNotFoundException("1"));
+
+        mockMvc.perform(delete("/api/v1/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+                .andExpect(jsonPath("$.flag").value(false))
+                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
+                .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
 }

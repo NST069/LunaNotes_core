@@ -6,5 +6,6 @@ public record NoteDTO(long id,
                       String title,
                       @NotEmpty(message = "Content is required")
                       String content,
+                      int numberOfTags,
                       UserDTO owner) {
 }

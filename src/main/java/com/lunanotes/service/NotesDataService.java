@@ -1,26 +1,36 @@
 package com.lunanotes.service;
 
 import com.lunanotes.exception.NoteNotFoundException;
+import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.UnauthorizedTagAccessException;
+import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.model.Note;
+import com.lunanotes.model.Tag;
 import com.lunanotes.repository.NotesJPARepository;
+import com.lunanotes.repository.TagsJPARepository;
 import com.lunanotes.util.IdWorker;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
+import java.util.Optional;
+import java.util.Set;
 
+@Slf4j
 @Service
 @Transactional
 public class NotesDataService {
 
-    @Autowired
     private final NotesJPARepository notesJPARepository;
+
+    private final TagsJPARepository tagsJPARepository;
 
     private final IdWorker idWorker;
 
-    public NotesDataService(NotesJPARepository notesJPARepository, IdWorker idWorker) {
+    public NotesDataService(NotesJPARepository notesJPARepository, TagsJPARepository tagsJPARepository, IdWorker idWorker) {
         this.notesJPARepository = notesJPARepository;
+        this.tagsJPARepository = tagsJPARepository;
         this.idWorker = idWorker;
     }
 
@@ -57,6 +67,81 @@ public class NotesDataService {
         this.notesJPARepository.findById(noteId)
             .orElseThrow(() -> new NoteNotFoundException(noteId));
         this.notesJPARepository.deleteById(noteId);
+    }
+
+    public Set<Tag> getTags(String noteId){
+        Note note = this.notesJPARepository.findById(noteId)
+                .orElseThrow(() -> new NoteNotFoundException(noteId));
+        return note.getTags();
+    }
+
+    public Note addTag(String noteId, String tagId){
+        Note note = this.notesJPARepository.findById(noteId)
+                .orElseThrow(() -> new NoteNotFoundException(noteId));
+        Tag tag = this.tagsJPARepository.findById(tagId)
+                .orElseThrow(()->new TagNotFoundException(tagId));
+        if (!note.getOwner().equals(tag.getOwner())) {
+            throw new UnauthorizedTagAccessException(tagId, noteId);
+        }
+
+        note.addTag(tag);
+        return notesJPARepository.save(note);
+    }
+
+    public Note removeTag(String noteId, String tagId) {
+        Note note = notesJPARepository.findById(noteId)
+                .orElseThrow(() -> new NoteNotFoundException(noteId));
+
+        Tag tag = tagsJPARepository.findById(tagId)
+                .orElseThrow(() -> new TagNotFoundException(tagId));
+
+        note.removeTag(tag);
+        return notesJPARepository.save(note);
+    }
+
+    public Note createAndAddTag(String noteId, CreateTagRequest request){
+        Note note = notesJPARepository.findById(noteId)
+                .orElseThrow(() -> new NoteNotFoundException(noteId));
+
+        Optional<Tag> existingTag = tagsJPARepository.findByNameAndOwnerId(
+                request.name(), note.getOwner().getId()
+        );
+
+        Tag tag;
+        if(existingTag.isPresent()){
+            tag = existingTag.get();
+        }
+        else{
+            tag = Tag.builder()
+                    .name(request.name())
+                    .owner(note.getOwner())
+                    .hexColor(request.hexColor())
+                    .build();
+            tag = tagsJPARepository.save(tag);
+        }
+
+        note.addTag(tag);
+        return notesJPARepository.save(note);
+    }
+
+    public Note addMultipleTags(String noteId, List<String> tagIds){
+        Note note = notesJPARepository.findById(noteId)
+                .orElseThrow(() -> new NoteNotFoundException(noteId));
+
+        List<Tag> tags = tagsJPARepository.findAllById(tagIds);
+
+        if (tags.size() != tagIds.size()) {
+            log.warn("One or more tags not found");
+        }
+
+        tags.forEach(tag -> {
+            if (!note.getOwner().equals(tag.getOwner())) {
+                throw new UnauthorizedTagAccessException(tag.getId().toString(), noteId);
+            }
+        });
+
+        tags.forEach(note::addTag);
+        return notesJPARepository.save(note);
     }
 
 }

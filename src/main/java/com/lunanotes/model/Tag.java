@@ -5,8 +5,8 @@ import jakarta.persistence.*;
 import lombok.*;
 
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="tags")
@@ -28,7 +28,9 @@ public class Tag {
     private User owner;
 
     @ManyToMany(mappedBy = "tags")
-    private List<Note> notes = new ArrayList<>();
+    @Getter
+    @Builder.Default
+    private final Set<Note> notes = new HashSet<>();
 
     @Getter @Setter
     private String hexColor;
@@ -38,4 +40,14 @@ public class Tag {
 
     @Getter @Setter
     private LocalDateTime updatedAt;
+
+    @PrePersist
+    protected void onCreate(){
+        createdAt = updatedAt = LocalDateTime.now();
+    }
+
+    @PreUpdate
+    protected void onUpdate(){
+        updatedAt = LocalDateTime.now();
+    }
 }
