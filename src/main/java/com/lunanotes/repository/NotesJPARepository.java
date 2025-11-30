@@ -14,4 +14,6 @@ public interface NotesJPARepository extends JpaRepository<Note, String> {
 
     List<Note> findByOwnerId(Long authorId);
 
+    List<Note> findByTagsId(Long tagId);
+
 }

@@ -22,6 +22,18 @@ public class ExceptionHandlerAdvice {
         return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
     }
 
+    @ExceptionHandler(UnauthorizedTagAccessException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    Result handleUnauthorizedTagAccessException(UnauthorizedTagAccessException ex){
+        return new Result(false, HttpStatus.FORBIDDEN.value(), ex.getMessage(), null);
+    }
+
+    @ExceptionHandler(TagNotFoundException.class)
+    @ResponseStatus(HttpStatus.NOT_FOUND)
+    Result handleTagNotFoundException(TagNotFoundException ex){
+        return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
+    }
+
     @ExceptionHandler(MethodArgumentNotValidException.class)
     @ResponseStatus(HttpStatus.BAD_REQUEST)
     Result handleValidationException(MethodArgumentNotValidException ex){

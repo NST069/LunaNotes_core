@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 
 @Entity
 @Table(name="notes")
@@ -34,6 +36,16 @@ public class Note implements Serializable {
     @Getter @Setter
     private User owner;
 
+    @ManyToMany
+    @JoinTable(
+            name = "note_tag",
+            joinColumns = @JoinColumn(name = "note_id"),
+            inverseJoinColumns = @JoinColumn(name = "tag_id")
+    )
+    @Getter
+    @Builder.Default
+    private final Set<Tag> tags = new HashSet<>();
+
     @PrePersist
     protected void onCreate(){
         createdAt = updatedAt = LocalDateTime.now();
@@ -42,5 +54,19 @@ public class Note implements Serializable {
     @PreUpdate
     protected void onUpdate(){
         updatedAt = LocalDateTime.now();
+    }
+
+    public void addTag(Tag tag){
+        this.tags.add(tag);
+        tag.getNotes().add(this);
+    }
+
+    public void removeTag(Tag tag){
+        this.tags.remove(tag);
+        tag.getNotes().remove(this);
+    }
+
+    public int getNumberOfTags() {
+        return this.tags.size();
     }
 }
