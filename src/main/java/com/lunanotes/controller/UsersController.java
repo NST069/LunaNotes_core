@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 import java.util.List;
 
 @RestController
-@RequestMapping("/api/v1/users")
+@RequestMapping("${api.endpoint.base-url}/users")
 public class UsersController {
 
     private final UsersDataService usersDataService;

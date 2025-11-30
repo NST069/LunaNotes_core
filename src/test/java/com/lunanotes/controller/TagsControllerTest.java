@@ -12,6 +12,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -34,6 +35,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class TagsControllerTest {
+
+    @Value("${api.endpoint.base-url}")
+    String baseUrl;
 
     @Autowired
     MockMvc mockMvc;
@@ -68,14 +72,14 @@ class TagsControllerTest {
     void findById_ExistingTag_ShouldReturnTag() throws Exception{
         given(this.tagsDataService.findById("1")).willReturn(this.tags.get(0));
 
-        this.mockMvc.perform(get("/api/v1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
                 .andExpect(jsonPath("$.data.name").value("test1"));
 
-        this.mockMvc.perform(get("/api/v1/tags/tag-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags/tag-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -87,13 +91,13 @@ class TagsControllerTest {
     void findById_NonExistingTag_ShouldThrowException() throws Exception{
         given(this.tagsDataService.findById("1")).willThrow(new TagNotFoundException("1"));
 
-        this.mockMvc.perform(get("/api/v1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
-        this.mockMvc.perform(get("/api/v1/tags/tag-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags/tag-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
@@ -104,7 +108,7 @@ class TagsControllerTest {
     void findAllTags_ShouldReturnList() throws Exception {
         given(this.tagsDataService.findAll()).willReturn(this.tags);
 
-        this.mockMvc.perform(get("/api/v1/tags").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -122,7 +126,7 @@ class TagsControllerTest {
 
         given(this.tagsDataService.findByOwnerId("1")).willReturn(filteredTags);
 
-        this.mockMvc.perform(get("/api/v1/tags/user-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/tags/user-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All For User Success"))
@@ -145,7 +149,7 @@ class TagsControllerTest {
 
         given(this.tagsDataService.save(Mockito.any(Tag.class))).willReturn(savedTag);
 
-        this.mockMvc.perform(post("/api/v1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl+"/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -166,7 +170,7 @@ class TagsControllerTest {
 
         given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willReturn(updatedTag);
 
-        this.mockMvc.perform(put("/api/v1/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -183,7 +187,7 @@ class TagsControllerTest {
 
         given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new TagNotFoundException("1"));
 
-        this.mockMvc.perform(put("/api/v1/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
@@ -194,7 +198,7 @@ class TagsControllerTest {
     void deleteTag_ExistingTag_ShouldDelete() throws Exception {
         doNothing().when(this.tagsDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -205,7 +209,7 @@ class TagsControllerTest {
     void deleteTag_NonExistingTag_ShouldThrowException() throws Exception {
         doThrow(new TagNotFoundException("1")).when(this.tagsDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))

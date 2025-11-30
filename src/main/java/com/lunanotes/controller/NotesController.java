@@ -14,7 +14,7 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 @RestController
-@RequestMapping("/api/v1/notes")
+@RequestMapping("${api.endpoint.base-url}/notes")
 public class NotesController {
 
     private final NotesDataService notesDataService;

@@ -11,6 +11,7 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -33,6 +34,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class UsersControllerTest {
+
+    @Value("${api.endpoint.base-url}")
+    String baseUrl;
 
     @Autowired
     MockMvc mockMvc;
@@ -75,7 +79,7 @@ class UsersControllerTest {
     void findById_ExistingUser_ShouldReturnNote() throws Exception{
         given(this.usersDataService.findById("1")).willReturn(this.users.get(0));
 
-        this.mockMvc.perform(get("/api/v1/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -87,7 +91,7 @@ class UsersControllerTest {
     void findById_NonExistingUser_ShouldThrowException() throws Exception{
         given(this.usersDataService.findById("1")).willThrow(new UserNotFoundException("1"));
 
-        this.mockMvc.perform(get("/api/v1/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))
@@ -98,7 +102,7 @@ class UsersControllerTest {
     void findAll_ShouldReturnList() throws Exception {
         given(this.usersDataService.findAll()).willReturn(this.users);
 
-        this.mockMvc.perform(get("/api/v1/users").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/users").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -116,7 +120,7 @@ class UsersControllerTest {
 
         given(this.usersDataService.save(Mockito.any(User.class))).willReturn(savedUser);
 
-        this.mockMvc.perform(post("/api/v1/users").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl+"/users").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -135,7 +139,7 @@ class UsersControllerTest {
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
 
-        this.mockMvc.perform(put("/api/v1/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -151,7 +155,7 @@ class UsersControllerTest {
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new UserNotFoundException("1"));
 
-        this.mockMvc.perform(put("/api/v1/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))
@@ -162,7 +166,7 @@ class UsersControllerTest {
     void deleteUser_ExistingUser_ShouldDelete() throws Exception {
         doNothing().when(this.usersDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -173,7 +177,7 @@ class UsersControllerTest {
     void deleteUser_NonExistingUser_ShouldThrowException() throws Exception {
         doThrow(new UserNotFoundException("1")).when(this.usersDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))

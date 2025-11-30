@@ -16,6 +16,7 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMockMvc;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
@@ -37,6 +38,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc
 class NotesControllerTest {
+
+    @Value("${api.endpoint.base-url}")
+    String baseUrl;
 
     @Autowired
     MockMvc mockMvc;
@@ -75,14 +79,14 @@ class NotesControllerTest {
     void findById_ExistingNote_ShouldReturnNote() throws Exception{
         given(this.notesDataService.findById("1")).willReturn(this.notes.get(0));
 
-        this.mockMvc.perform(get("/api/v1/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
                 .andExpect(jsonPath("$.data.title").value("test1"));
 
-        this.mockMvc.perform(get("/api/v1/notes/note-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/note-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -94,13 +98,13 @@ class NotesControllerTest {
     void findById_NonExistingNote_ShouldThrowException() throws Exception{
         given(this.notesDataService.findById("1")).willThrow(new NoteNotFoundException("1"));
 
-        this.mockMvc.perform(get("/api/v1/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
-        this.mockMvc.perform(get("/api/v1/notes/note-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/note-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -111,7 +115,7 @@ class NotesControllerTest {
     void findAllNotes_ShouldReturnList() throws Exception {
         given(this.notesDataService.findAll()).willReturn(this.notes);
 
-        this.mockMvc.perform(get("/api/v1/notes").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -129,7 +133,7 @@ class NotesControllerTest {
 
         given(this.notesDataService.findByOwnerId("1")).willReturn(filteredNotes);
 
-        this.mockMvc.perform(get("/api/v1/notes/user-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/user-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All For User Success"))
@@ -152,7 +156,7 @@ class NotesControllerTest {
 
         given(this.notesDataService.save(any(Note.class))).willReturn(savedNote);
 
-        this.mockMvc.perform(post("/api/v1/notes").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl+"/notes").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -173,7 +177,7 @@ class NotesControllerTest {
 
         given(this.notesDataService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
 
-        this.mockMvc.perform(put("/api/v1/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -190,7 +194,7 @@ class NotesControllerTest {
 
         given(this.notesDataService.update(eq("1"), any(Note.class))).willThrow(new NoteNotFoundException("1"));
 
-        this.mockMvc.perform(put("/api/v1/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -201,7 +205,7 @@ class NotesControllerTest {
     void deleteNote_ExistingNote_ShouldDelete() throws Exception {
         doNothing().when(this.notesDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -212,7 +216,7 @@ class NotesControllerTest {
     void deleteNote_NonExistingNote_ShouldThrowException() throws Exception {
         doThrow(new NoteNotFoundException("1")).when(this.notesDataService).delete("1");
 
-        this.mockMvc.perform(delete("/api/v1/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -234,13 +238,13 @@ class NotesControllerTest {
 
         given(this.notesDataService.getTags("1")).willReturn(this.notes.get(0).getTags());
 
-        this.mockMvc.perform(get("/api/v1/notes/1/tags").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Get Tags Success"))
                 .andExpect(jsonPath("$.data", Matchers.hasSize(tags.size())));
 
-        this.mockMvc.perform(get("/api/v1/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Get Tags Success"))
@@ -251,13 +255,13 @@ class NotesControllerTest {
     void getTags_NonExistingNote_ShouldThrowExcepton() throws Exception {
         given(this.notesDataService.getTags("1")).willThrow(new NoteNotFoundException("1"));
 
-        this.mockMvc.perform(get("/api/v1/notes/1/tags").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
-        this.mockMvc.perform(get("/api/v1/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -279,7 +283,7 @@ class NotesControllerTest {
 
         given(notesDataService.addTag("1", "1")).willReturn(this.notes.get(0));
 
-        mockMvc.perform(post("/api/v1/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Tag Success"))
@@ -294,7 +298,7 @@ class NotesControllerTest {
 
         given(notesDataService.addTag("1", "1")).willThrow(new NoteNotFoundException("1"));
 
-        mockMvc.perform(post("/api/v1/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -315,7 +319,7 @@ class NotesControllerTest {
 
         given(notesDataService.createAndAddTag(eq("1"), any(CreateTagRequest.class))).willReturn(notes.get(0));
 
-        mockMvc.perform(post("/api/v1/notes/1/tags/create").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl+"/notes/1/tags/create").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Tag Success"))
@@ -343,7 +347,7 @@ class NotesControllerTest {
 
         given(notesDataService.addMultipleTags("1", request.tagIds())).willReturn(notes.get(0));
 
-        mockMvc.perform(post("/api/v1/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl+"/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Multiple Tags Success"))
@@ -365,7 +369,7 @@ class NotesControllerTest {
 
         given(notesDataService.removeTag("1", "1")).willReturn(notes.get(0));
 
-        this.mockMvc.perform(delete("/api/v1/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Remove Tag Success"))
@@ -384,7 +388,7 @@ class NotesControllerTest {
 
         given(notesDataService.removeTag("1", "1")).willThrow(new TagNotFoundException("1"));
 
-        mockMvc.perform(delete("/api/v1/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
