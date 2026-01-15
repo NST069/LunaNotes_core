@@ -6,7 +6,6 @@ import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UsersDataService;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,6 +15,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -32,6 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class UsersControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -55,23 +56,25 @@ class UsersControllerTest {
         User user1 = User.builder()
                 .id(1L)
                 .userName("John Doe")
+                .password("password")
+                .roles("USER")
                 .build();
         User user2 = User.builder()
                 .id(2L)
                 .userName("Marc Zucc")
+                .password("password")
+                .roles("USER")
                 .build();
         User user3 = User.builder()
                 .id(3L)
                 .userName("Paul Fool")
+                .password("password")
+                .roles("USER")
                 .build();
 
         users.add(user1);
         users.add(user2);
         users.add(user3);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test

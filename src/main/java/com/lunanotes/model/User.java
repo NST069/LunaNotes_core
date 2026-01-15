@@ -42,10 +42,10 @@ public class User implements Serializable {
     @Getter @Setter
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Note> notes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Tag> tags = new ArrayList<>();
 
     public void addNote(Note note){

@@ -19,6 +19,8 @@ import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
+import org.springframework.security.oauth2.server.resource.authentication.JwtAuthenticationConverter;
+import org.springframework.security.oauth2.server.resource.authentication.JwtGrantedAuthoritiesConverter;
 import org.springframework.security.web.SecurityFilterChain;
 
 import java.security.KeyPair;
@@ -59,7 +61,16 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/notes").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
+
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/tags").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
+
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, this.baseUrl + "/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
@@ -94,6 +105,18 @@ public class SecurityConfiguration {
     @Bean
     public JwtDecoder jwtDecoder() {
         return NimbusJwtDecoder.withPublicKey(this.publicKey).build();
+    }
+
+    @Bean
+    public JwtAuthenticationConverter jwtAuthenticationConverter() {
+        JwtGrantedAuthoritiesConverter jwtGrantedAuthoritiesConverter = new JwtGrantedAuthoritiesConverter();
+
+        jwtGrantedAuthoritiesConverter.setAuthoritiesClaimName("authorities");
+        jwtGrantedAuthoritiesConverter.setAuthorityPrefix("");
+
+        JwtAuthenticationConverter jwtAuthenticationConverter = new JwtAuthenticationConverter();
+        jwtAuthenticationConverter.setJwtGrantedAuthoritiesConverter(jwtGrantedAuthoritiesConverter);
+        return jwtAuthenticationConverter;
     }
 
 }

@@ -7,7 +7,6 @@ import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.service.TagsDataService;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,6 +16,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -34,6 +34,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class TagsControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -59,15 +60,11 @@ class TagsControllerTest {
                 .roles("USER")
                 .build();
         this.tags = new ArrayList<>();
-        tags.add(new Tag(1L, "test1","#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
-        tags.add(new Tag(2L, "test2", "#000000", LocalDateTime.now(), LocalDateTime.now(), null, null));
-        tags.add(new Tag(3L, "test3", "#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
-        tags.add(new Tag(4L, "test4", "#000000", LocalDateTime.now(), LocalDateTime.now(), null, null));
-        tags.add(new Tag(5L, "test5", "#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
-    }
-
-    @AfterEach
-    void tearDown() {
+        tags.add(new Tag(1L, "test1","#000000", LocalDateTime.now(), LocalDateTime.now(), user));
+        tags.add(new Tag(2L, "test2", "#000000", LocalDateTime.now(), LocalDateTime.now(), null));
+        tags.add(new Tag(3L, "test3", "#000000", LocalDateTime.now(), LocalDateTime.now(), user));
+        tags.add(new Tag(4L, "test4", "#000000", LocalDateTime.now(), LocalDateTime.now(), null));
+        tags.add(new Tag(5L, "test5", "#000000", LocalDateTime.now(), LocalDateTime.now(), user));
     }
 
     @Test
