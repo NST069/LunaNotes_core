@@ -1,26 +1,24 @@
 package com.lunanotes.service;
 
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.Tag;
 import com.lunanotes.repository.TagsJPARepository;
 import jakarta.transaction.Transactional;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @Transactional
+@RequiredArgsConstructor
 public class TagsDataService {
 
     private final TagsJPARepository tagsJPARepository;
 
-    public TagsDataService(TagsJPARepository tagsJPARepository) {
-        this.tagsJPARepository = tagsJPARepository;
-    }
-
     public Tag findById(String tagId){
         return this.tagsJPARepository.findById(tagId)
-                .orElseThrow(()->new TagNotFoundException(tagId));
+                .orElseThrow(()->new ObjectNotFoundException("tag", tagId));
     }
 
     public List<Tag> findAll(){
@@ -43,12 +41,12 @@ public class TagsDataService {
 
                     return this.tagsJPARepository.save(oldTag);
                 })
-                .orElseThrow(() -> new TagNotFoundException(tagId));
+                .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
     }
 
     public void delete(String tagId){
         this.tagsJPARepository.findById(tagId)
-                .orElseThrow(() -> new TagNotFoundException(tagId));
+                .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
         this.tagsJPARepository.deleteById(tagId);
     }
 }

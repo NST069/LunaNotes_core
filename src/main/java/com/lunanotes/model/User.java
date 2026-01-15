@@ -23,6 +23,11 @@ public class User implements Serializable {
     private String userName;
 
     @Getter @Setter
+    private String password;
+
+    @Getter @Setter
+    private String roles;
+
     private String firstName; //?
 
     @Getter @Setter
@@ -58,11 +63,4 @@ public class User implements Serializable {
         updatedAt = LocalDateTime.now();
     }
 
-    public int getNumberOfNotes() {
-        return this.notes.size();
-    }
-
-    public int getNumberOfTags() {
-        return this.tags.size();
-    }
 }

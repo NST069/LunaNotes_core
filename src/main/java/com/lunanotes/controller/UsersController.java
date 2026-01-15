@@ -44,8 +44,7 @@ public class UsersController {
     }
 
     @PostMapping
-    public Result addUser(@Valid @RequestBody UserDTO userDTO) {
-        User newUser = this.userDTOToUserConverter.convert(userDTO);
+    public Result addUser(@Valid @RequestBody User newUser) {
         User savedUser = this.usersDataService.save(newUser);
         UserDTO savedUserDTO = this.userToUserDTOConverter.convert(savedUser);
         return new Result(true, HttpStatus.OK.value(), "Add Success", savedUserDTO);

@@ -1,7 +1,7 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.exception.UserNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UsersDataService;
@@ -19,7 +19,6 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.print.attribute.standard.Media;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +31,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 class UsersControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -89,7 +88,7 @@ class UsersControllerTest {
 
     @Test
     void findById_NonExistingUser_ShouldThrowException() throws Exception{
-        given(this.usersDataService.findById("1")).willThrow(new UserNotFoundException("1"));
+        given(this.usersDataService.findById("1")).willThrow(new ObjectNotFoundException("user", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -111,7 +110,7 @@ class UsersControllerTest {
 
     @Test
     void addUser_ShouldSave() throws Exception {
-        UserDTO userDTO = new UserDTO(0, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(0, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         User savedUser = new User();
@@ -134,7 +133,7 @@ class UsersControllerTest {
         updatedUser.setId(1L);
         updatedUser.setUserName("test");
 
-        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(1, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
@@ -150,10 +149,10 @@ class UsersControllerTest {
     @Test
     void updateUser_NonExistingUser_ShouldThrowException() throws Exception {
 
-        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(1, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
-        given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new UserNotFoundException("1"));
+        given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new ObjectNotFoundException("user", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -175,7 +174,7 @@ class UsersControllerTest {
 
     @Test
     void deleteUser_NonExistingUser_ShouldThrowException() throws Exception {
-        doThrow(new UserNotFoundException("1")).when(this.usersDataService).delete("1");
+        doThrow(new ObjectNotFoundException("user", "1")).when(this.usersDataService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

@@ -22,6 +22,15 @@ public class Tag {
     @Getter @Setter
     private String name;
 
+    @Getter @Setter
+    private String hexColor;
+
+    @Getter @Setter
+    private LocalDateTime createdAt;
+
+    @Getter @Setter
+    private LocalDateTime updatedAt;
+
     @ManyToOne
     @JoinColumn(name="owner_id")
     @Getter @Setter
@@ -31,15 +40,6 @@ public class Tag {
     @Getter
     @Builder.Default
     private final Set<Note> notes = new HashSet<>();
-
-    @Getter @Setter
-    private String hexColor;
-
-    @Getter @Setter
-    private LocalDateTime createdAt;
-
-    @Getter @Setter
-    private LocalDateTime updatedAt;
 
     @PrePersist
     protected void onCreate(){

@@ -1,7 +1,7 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.TagDTO;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 class TagsControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -55,13 +55,15 @@ class TagsControllerTest {
         User user = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
         this.tags = new ArrayList<>();
-        tags.add(new Tag(1L, "test1", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(2L, "test2", null, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(3L, "test3", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(4L, "test4", null, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(5L, "test5", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
+        tags.add(new Tag(1L, "test1","#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
+        tags.add(new Tag(2L, "test2", "#000000", LocalDateTime.now(), LocalDateTime.now(), null, null));
+        tags.add(new Tag(3L, "test3", "#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
+        tags.add(new Tag(4L, "test4", "#000000", LocalDateTime.now(), LocalDateTime.now(), null, null));
+        tags.add(new Tag(5L, "test5", "#000000", LocalDateTime.now(), LocalDateTime.now(), user, null));
     }
 
     @AfterEach
@@ -89,7 +91,7 @@ class TagsControllerTest {
 
     @Test
     void findById_NonExistingTag_ShouldThrowException() throws Exception{
-        given(this.tagsDataService.findById("1")).willThrow(new TagNotFoundException("1"));
+        given(this.tagsDataService.findById("1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -185,7 +187,7 @@ class TagsControllerTest {
         TagDTO tagDTO = new TagDTO(1, "test", "#FFFF00", null);
         String json = this.objectMapper.writeValueAsString(tagDTO);
 
-        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new TagNotFoundException("1"));
+        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -207,7 +209,7 @@ class TagsControllerTest {
 
     @Test
     void deleteTag_NonExistingTag_ShouldThrowException() throws Exception {
-        doThrow(new TagNotFoundException("1")).when(this.tagsDataService).delete("1");
+        doThrow(new ObjectNotFoundException("tag", "1")).when(this.tagsDataService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

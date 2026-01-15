@@ -11,6 +11,7 @@ public class UserDTOToUserConverter implements Converter<UserDTO, User> {
         User user = new User();
         if (source.id() > 0) user.setId(source.id());
         user.setUserName(source.userName());
+        user.setRoles(source.roles());
 
         return user;
     }

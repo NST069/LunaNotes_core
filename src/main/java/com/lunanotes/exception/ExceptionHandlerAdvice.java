@@ -2,6 +2,12 @@ package com.lunanotes.exception;
 
 import com.lunanotes.util.Result;
 import org.springframework.http.HttpStatus;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AccountStatusException;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.InsufficientAuthenticationException;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.oauth2.server.resource.InvalidBearerTokenException;
 import org.springframework.validation.FieldError;
 import org.springframework.validation.ObjectError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -16,28 +22,46 @@ import java.util.Map;
 @RestControllerAdvice
 public class ExceptionHandlerAdvice {
 
-    @ExceptionHandler(NoteNotFoundException.class)
+    @ExceptionHandler(ObjectNotFoundException.class)
     @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleNoteNotFoundException(NoteNotFoundException ex) {
+    Result handleObjectNotFoundException(ObjectNotFoundException ex) {
         return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
     }
 
-    @ExceptionHandler(UserNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleUserNotFoundException(UserNotFoundException ex) {
-        return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
+    @ExceptionHandler({UsernameNotFoundException.class, BadCredentialsException.class})
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleAuthenticationException(Exception ex) {
+        return new Result(false, HttpStatus.UNAUTHORIZED.value(), "Username or password is incorrect", ex.getMessage());
+    }
+
+    @ExceptionHandler(InsufficientAuthenticationException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleInsufficientAuthenticationException(InsufficientAuthenticationException ex) {
+        return new Result(false, HttpStatus.UNAUTHORIZED.value(), "Login credentials are missing.", ex.getMessage());
+    }
+
+    @ExceptionHandler(AccountStatusException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleAccountStatusException(AccountStatusException ex) {
+        return new Result(false, HttpStatus.UNAUTHORIZED.value(), "User account is disabled or locked", ex.getMessage());
+    }
+
+    @ExceptionHandler(InvalidBearerTokenException.class)
+    @ResponseStatus(HttpStatus.UNAUTHORIZED)
+    Result handleInvalidBearerTokenException(InvalidBearerTokenException ex) {
+        return new Result(false, HttpStatus.UNAUTHORIZED.value(), "The access token provided is invalid or expired", ex.getMessage());
+    }
+
+    @ExceptionHandler(AccessDeniedException.class)
+    @ResponseStatus(HttpStatus.FORBIDDEN)
+    Result handleAccessDeniedException(AccessDeniedException ex) {
+        return new Result(false, HttpStatus.FORBIDDEN.value(), "No permission", ex.getMessage());
     }
 
     @ExceptionHandler(UnauthorizedTagAccessException.class)
     @ResponseStatus(HttpStatus.FORBIDDEN)
-    Result handleUnauthorizedTagAccessException(UnauthorizedTagAccessException ex){
+    Result handleUnauthorizedTagAccessException(UnauthorizedTagAccessException ex) {
         return new Result(false, HttpStatus.FORBIDDEN.value(), ex.getMessage(), null);
-    }
-
-    @ExceptionHandler(TagNotFoundException.class)
-    @ResponseStatus(HttpStatus.NOT_FOUND)
-    Result handleTagNotFoundException(TagNotFoundException ex){
-        return new Result(false, HttpStatus.NOT_FOUND.value(), ex.getMessage(), null);
     }
 
     @ExceptionHandler(MethodArgumentNotValidException.class)
@@ -53,4 +77,16 @@ public class ExceptionHandlerAdvice {
 
         return new Result(false, HttpStatus.BAD_REQUEST.value(), "Provided arguments are invalid", map);
     }
+
+    /**
+     * Fallback for unhandled exceptions
+     * @param ex
+     * @return
+     */
+    @ExceptionHandler(Exception.class)
+    @ResponseStatus(HttpStatus.INTERNAL_SERVER_ERROR)
+    Result handleOtherException(Exception ex) {
+        return new Result(false, HttpStatus.INTERNAL_SERVER_ERROR.value(), "Internal server error", ex.getMessage());
+    }
+
 }

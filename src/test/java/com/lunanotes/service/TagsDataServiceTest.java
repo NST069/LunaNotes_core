@@ -1,10 +1,11 @@
 package com.lunanotes.service;
 
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.TagsJPARepository;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -19,7 +20,6 @@ import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -46,10 +46,14 @@ class TagsDataServiceTest {
         User user1 = User.builder()
                 .id(1L)
                 .userName("John Doe")
+                .password("password")
+                .roles("USER")
                 .build();
         User user2 = User.builder()
                 .id(2L)
                 .userName("James Doe")
+                .password("password")
+                .roles("USER")
                 .build();
 
         users.add(user1);
@@ -132,11 +136,12 @@ class TagsDataServiceTest {
     void findById_NonExistingTag_ShouldThrowException() {
         given(tagsJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
-        Throwable thrown = catchThrowable(()->{
-            Tag result = tagsDataService.findById("1");
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            tagsDataService.findById("1");
         });
 
-        assertThat(thrown).isInstanceOf(TagNotFoundException.class)
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
         verify(tagsJPARepository, times(1)).findById("1");
@@ -216,9 +221,13 @@ class TagsDataServiceTest {
 
         given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(TagNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             tagsDataService.update("1", update);
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find tag with Id 1");
 
         verify(tagsJPARepository, times(1)).findById("1");
     }
@@ -242,9 +251,13 @@ class TagsDataServiceTest {
     void deleteTag_NonExistingTag_ShouldThrowException(){
         given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(TagNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             tagsDataService.delete("1");
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find tag with Id 1");
 
         verify(tagsJPARepository, times(1)).findById("1");
     }

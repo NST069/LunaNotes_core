@@ -1,8 +1,7 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.exception.NoteNotFoundException;
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.AddMultipleTagsRequest;
 import com.lunanotes.mapper.AddTagRequest;
 import com.lunanotes.mapper.CreateTagRequest;
@@ -36,7 +35,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
 class NotesControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -60,6 +59,8 @@ class NotesControllerTest {
         User user = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
         this.users = new ArrayList<>();
         this.users.add(user);
@@ -96,7 +97,7 @@ class NotesControllerTest {
 
     @Test
     void findById_NonExistingNote_ShouldThrowException() throws Exception{
-        given(this.notesDataService.findById("1")).willThrow(new NoteNotFoundException("1"));
+        given(this.notesDataService.findById("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -192,7 +193,7 @@ class NotesControllerTest {
         NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
-        given(this.notesDataService.update(eq("1"), any(Note.class))).willThrow(new NoteNotFoundException("1"));
+        given(this.notesDataService.update(eq("1"), any(Note.class))).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -214,7 +215,7 @@ class NotesControllerTest {
 
     @Test
     void deleteNote_NonExistingNote_ShouldThrowException() throws Exception {
-        doThrow(new NoteNotFoundException("1")).when(this.notesDataService).delete("1");
+        doThrow(new ObjectNotFoundException("note", "1")).when(this.notesDataService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -253,7 +254,7 @@ class NotesControllerTest {
 
     @Test
     void getTags_NonExistingNote_ShouldThrowExcepton() throws Exception {
-        given(this.notesDataService.getTags("1")).willThrow(new NoteNotFoundException("1"));
+        given(this.notesDataService.getTags("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -296,7 +297,7 @@ class NotesControllerTest {
         AddTagRequest request = new AddTagRequest("1");
         String json = this.objectMapper.writeValueAsString(request);
 
-        given(notesDataService.addTag("1", "1")).willThrow(new NoteNotFoundException("1"));
+        given(notesDataService.addTag("1", "1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -386,7 +387,7 @@ class NotesControllerTest {
 
         notes.get(0).removeTag(tag);
 
-        given(notesDataService.removeTag("1", "1")).willThrow(new TagNotFoundException("1"));
+        given(notesDataService.removeTag("1", "1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
         mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

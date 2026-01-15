@@ -1,28 +1,31 @@
 package com.lunanotes.service;
 
-import com.lunanotes.exception.UserNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
+import com.lunanotes.mapper.UserPrincipal;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.UsersJPARepository;
 import jakarta.transaction.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
+import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 
 @Service
 @Transactional
-public class UsersDataService {
+@RequiredArgsConstructor
+public class UsersDataService implements UserDetailsService {
 
-    @Autowired
     private final UsersJPARepository usersJPARepository;
 
-    public UsersDataService(UsersJPARepository usersJPARepository) {
-        this.usersJPARepository = usersJPARepository;
-    }
+    private final PasswordEncoder passwordEncoder;
 
     public User findById(String userId) {
         return this.usersJPARepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new ObjectNotFoundException("user", userId));
     }
 
     public List<User> findAll(){
@@ -30,6 +33,7 @@ public class UsersDataService {
     }
 
     public User save(User user) {
+        user.setPassword(this.passwordEncoder.encode(user.getPassword()));
         return this.usersJPARepository.save(user);
     }
 
@@ -37,16 +41,23 @@ public class UsersDataService {
         return this.usersJPARepository.findById(userId)
                 .map(oldUser -> {
                     oldUser.setUserName(user.getUserName());
+                    oldUser.setRoles(user.getRoles());
 
                     return this.usersJPARepository.save(oldUser);
                 })
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new ObjectNotFoundException("user", userId));
     }
 
     public void delete(String userId) {
         User user = this.usersJPARepository.findById(userId)
-                .orElseThrow(() -> new UserNotFoundException(userId));
+                .orElseThrow(() -> new ObjectNotFoundException("user", userId));
         this.usersJPARepository.deleteById(userId);
     }
 
+    @Override
+    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
+        return this.usersJPARepository.findByUserName(username)
+                .map(UserPrincipal::new)
+                .orElseThrow(()->new UsernameNotFoundException("username "+username+" not found"));
+    }
 }

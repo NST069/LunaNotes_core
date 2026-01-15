@@ -1,6 +1,6 @@
 package com.lunanotes.service;
 
-import com.lunanotes.exception.UserNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.UsersJPARepository;
 import org.junit.jupiter.api.AfterEach;
@@ -11,12 +11,14 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.security.crypto.password.PasswordEncoder;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.AssertionsForClassTypes.catchThrowable;
 import static org.junit.jupiter.api.Assertions.*;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
@@ -26,6 +28,9 @@ class UsersDataServiceTest {
 
     @Mock
     UsersJPARepository usersJPARepository;
+
+    @Mock
+    PasswordEncoder passwordEncoder;
 
     @InjectMocks
     UsersDataService usersDataService;
@@ -39,14 +44,20 @@ class UsersDataServiceTest {
         User user1 = User.builder()
                 .id(1L)
                 .userName("John Doe")
+                .password("password")
+                .roles("USER")
                 .build();
         User user2 = User.builder()
                 .id(2L)
                 .userName("Marc Zucc")
+                .password("password")
+                .roles("USER")
                 .build();
         User user3 = User.builder()
                 .id(3L)
                 .userName("Paul Fool")
+                .password("password")
+                .roles("USER")
                 .build();
 
         users.add(user1);
@@ -63,6 +74,8 @@ class UsersDataServiceTest {
         User user = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(user));
@@ -77,9 +90,13 @@ class UsersDataServiceTest {
     void findById_NonExistingUser_ShouldThrowException() {
         given(usersJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> {
+        Throwable thrown = catchThrowable(() -> {
             usersDataService.findById("1");
         });
+
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find user with Id 1");
 
         verify(usersJPARepository, times(1)).findById("1");
     }
@@ -100,8 +117,11 @@ class UsersDataServiceTest {
         User newUser = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
 
+        given(this.passwordEncoder.encode(newUser.getPassword())).willReturn("password");
         given(usersJPARepository.save(newUser)).willReturn(newUser);
 
         User result = usersDataService.save(newUser);
@@ -117,11 +137,15 @@ class UsersDataServiceTest {
         User oldUser = User.builder()
                 .id(1L)
                 .userName("John Doe")
+                .password("password")
+                .roles("USER")
                 .build();
 
         User update = User.builder()
                 .id(1L)
                 .userName("Bill Straights")
+                .password("password")
+                .roles("USER")
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(oldUser));
@@ -141,13 +165,19 @@ class UsersDataServiceTest {
         User update = User.builder()
                 .id(1L)
                 .userName("Nylon Tusk")
+                .password("password")
+                .roles("USER")
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> {
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             usersDataService.update("1", update);
         });
+
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find user with Id 1");
 
         verify(usersJPARepository, times(1)).findById("1");
     }
@@ -157,6 +187,8 @@ class UsersDataServiceTest {
         User user = User.builder()
                 .id(1L)
                 .userName("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(user));
@@ -171,9 +203,13 @@ class UsersDataServiceTest {
     void deleteUser_NonExistingUser_ShouldThrowException() {
         given(usersJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(UserNotFoundException.class, () -> {
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             usersDataService.delete("1");
         });
+
+        assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find user with Id 1");
 
         verify(usersJPARepository, times(1)).findById("1");
     }

@@ -3,28 +3,33 @@ package com.lunanotes.util;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.NotesJPARepository;
-import com.lunanotes.repository.UsersJPARepository;
+import com.lunanotes.service.UsersDataService;
+import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class DBDataInitializer implements CommandLineRunner {
 
     private final NotesJPARepository notesJPARepository;
 
-    private final UsersJPARepository usersJPARepository;
-
-    public DBDataInitializer(NotesJPARepository notesJPARepository, UsersJPARepository usersJPARepository) {
-        this.notesJPARepository = notesJPARepository;
-        this.usersJPARepository = usersJPARepository;
-    }
+    private final UsersDataService usersDataService;
 
     @Override
-    public void run(String... args) throws Exception {
+    public void run(String... args){
         User user1 = new User();
         user1.setUserName("User1");
+        user1.setPassword("password1");
+        user1.setRoles("USER ADMIN");
         User user2 = new User();
         user2.setUserName("User2");
+        user2.setPassword("password2");
+        user2.setRoles("USER");
+        User user3 = new User();
+        user3.setUserName("User3");
+        user3.setPassword("password3");
+        user3.setRoles("USER");
 
         Note note1 = new Note();
         note1.setContent("lorem ipsum1");
@@ -47,8 +52,9 @@ public class DBDataInitializer implements CommandLineRunner {
         user2.addNote(note3);
         user2.addNote(note4);
 
-        usersJPARepository.save(user1);
-        usersJPARepository.save(user2);
+        usersDataService.save(user1);
+        usersDataService.save(user2);
+        usersDataService.save(user3);
 
         notesJPARepository.save(note5);
     }

@@ -10,3 +10,10 @@ spring:
 api:
   endpoint:
     base-url: /api/v1
+
+security:
+  oauth2:
+    resourceserver:
+      jwt:
+        authorities-claim-name: authorities
+        authority-prefix: ""
