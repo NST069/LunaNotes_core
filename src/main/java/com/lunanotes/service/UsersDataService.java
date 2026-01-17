@@ -40,7 +40,7 @@ public class UsersDataService implements UserDetailsService {
     public User update(String userId, User user) {
         return this.usersJPARepository.findById(userId)
                 .map(oldUser -> {
-                    oldUser.setUserName(user.getUserName());
+                    oldUser.setUsername(user.getUsername());
                     oldUser.setRoles(user.getRoles());
 
                     return this.usersJPARepository.save(oldUser);
@@ -54,9 +54,13 @@ public class UsersDataService implements UserDetailsService {
         this.usersJPARepository.deleteById(userId);
     }
 
+    public boolean existsByUsername(String username) {
+        return this.usersJPARepository.findByUsername(username).isPresent();
+    }
+
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return this.usersJPARepository.findByUserName(username)
+        return this.usersJPARepository.findByUsername(username)
                 .map(UserPrincipal::new)
                 .orElseThrow(()->new UsernameNotFoundException("username "+username+" not found"));
     }

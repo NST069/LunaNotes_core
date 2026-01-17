@@ -1,5 +1,6 @@
 package com.lunanotes.security;
 
+import com.lunanotes.util.UserRole;
 import com.nimbusds.jose.jwk.JWK;
 import com.nimbusds.jose.jwk.JWKSet;
 import com.nimbusds.jose.jwk.RSAKey;
@@ -45,10 +46,13 @@ public class SecurityConfiguration {
 
     private final BearerTokenAccessDeniedEntryPoint bearerTokenAccessDeniedEntryPoint;
 
-    public SecurityConfiguration(BasicAuthenticationEntryPoint authenticationEntryPoint, BearerTokenAuthenticationEntryPoint bearerTokenAuthenticationEntryPoint, BearerTokenAccessDeniedEntryPoint bearerTokenAccessDeniedEntryPoint) throws NoSuchAlgorithmException {
+    private final UserRequestAuthorizationManager userRequestAuthorizationManager;
+
+    public SecurityConfiguration(BasicAuthenticationEntryPoint authenticationEntryPoint, BearerTokenAuthenticationEntryPoint bearerTokenAuthenticationEntryPoint, BearerTokenAccessDeniedEntryPoint bearerTokenAccessDeniedEntryPoint, UserRequestAuthorizationManager userRequestAuthorizationManager) throws NoSuchAlgorithmException {
         this.authenticationEntryPoint = authenticationEntryPoint;
         this.bearerTokenAuthenticationEntryPoint = bearerTokenAuthenticationEntryPoint;
         this.bearerTokenAccessDeniedEntryPoint = bearerTokenAccessDeniedEntryPoint;
+        this.userRequestAuthorizationManager = userRequestAuthorizationManager;
 
         KeyPairGenerator keyPairGenerator = KeyPairGenerator.getInstance("RSA");
         keyPairGenerator.initialize(2048);
@@ -61,21 +65,26 @@ public class SecurityConfiguration {
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
-                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/notes").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/notes/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/auth/**").permitAll()
+                        .requestMatchers("/h2-console/**").permitAll()
 
-                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/tags").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
-                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/tags/**").hasAuthority("ROLE_USER")
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/notes").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
+
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/tags").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/tags/**").access(this.userRequestAuthorizationManager)
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/tags").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/tags/**").access(this.userRequestAuthorizationManager)
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/tags/**").access(this.userRequestAuthorizationManager)
 
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.POST, this.baseUrl + "/users").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.PUT, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
                         .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers("/h2-console/**").permitAll()
+
                         .anyRequest().authenticated()
                 )
                 .headers(headers -> headers.frameOptions(Customizer.withDefaults()).disable())

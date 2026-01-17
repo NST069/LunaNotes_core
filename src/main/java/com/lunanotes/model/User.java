@@ -20,7 +20,10 @@ public class User implements Serializable {
     private Long id;
 
     @Getter @Setter
-    private String userName;
+    private String username;
+
+    @Getter @Setter
+    private String email;
 
     @Getter @Setter
     private String password;
@@ -28,13 +31,15 @@ public class User implements Serializable {
     @Getter @Setter
     private String roles;
 
-    private String firstName; //?
+    @Getter @Setter
+    private String telegramId;
 
     @Getter @Setter
-    private String lastName; //?
+    private String telegramUsername;
 
     @Getter @Setter
-    private String telegramId; //?
+    @Builder.Default
+    private boolean enabled = true;
 
     @Getter @Setter
     private LocalDateTime createdAt;

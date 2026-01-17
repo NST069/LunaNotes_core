@@ -8,6 +8,7 @@ import com.lunanotes.model.User;
 import com.lunanotes.repository.NotesJPARepository;
 import com.lunanotes.repository.TagsJPARepository;
 import com.lunanotes.util.IdWorker;
+import com.lunanotes.util.UserRole;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,7 +51,7 @@ class NotesDataServiceTest {
     void setUp() {
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
                 .password("password")
                 .roles("USER")
                 .build();
@@ -86,7 +87,7 @@ class NotesDataServiceTest {
     void findById_ExistingNote_ShouldReturnNote() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
                 .roles("USER")
                 .build();
@@ -243,9 +244,9 @@ class NotesDataServiceTest {
     void getTags_ExistingNote_ShouldReturnTagsList(){
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         Note note = Note.builder()
                 .id(1L)
@@ -278,7 +279,7 @@ class NotesDataServiceTest {
     }
 
     @Test
-    void getTags_NonExistingNote_ShouldThrowExcepton(){
+    void getTags_NonExistingNote_ShouldThrowException(){
         given(notesJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {

@@ -5,6 +5,7 @@ import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.TagsJPARepository;
+import com.lunanotes.util.UserRole;
 import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,15 +48,15 @@ class TagsDataServiceTest {
 
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         User user2 = User.builder()
                 .id(2L)
-                .userName("James Doe")
+                .username("James Doe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         users.add(user1);

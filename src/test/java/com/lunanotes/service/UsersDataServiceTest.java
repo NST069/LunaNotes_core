@@ -3,6 +3,7 @@ package com.lunanotes.service;
 import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.UsersJPARepository;
+import com.lunanotes.util.UserRole;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,21 +46,21 @@ class UsersDataServiceTest {
 
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         User user2 = User.builder()
                 .id(2L)
-                .userName("Marc Zucc")
+                .username("Marc Zucc")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         User user3 = User.builder()
                 .id(3L)
-                .userName("Paul Fool")
+                .username("Paul Fool")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         users.add(user1);
@@ -75,9 +76,9 @@ class UsersDataServiceTest {
     void findById_ExistingUser_ShouldReturnUser() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(user));
@@ -85,7 +86,7 @@ class UsersDataServiceTest {
         User result = usersDataService.findById("1");
 
         assertThat(result.getId()).isEqualTo(user.getId());
-        assertThat(result.getUserName()).isEqualTo(user.getUserName());
+        assertThat(result.getUsername()).isEqualTo(user.getUsername());
     }
 
     @Test
@@ -118,7 +119,7 @@ class UsersDataServiceTest {
     void saveUser_ShouldCreate() {
         User newUser = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
                 .roles("USER")
                 .build();
@@ -129,7 +130,7 @@ class UsersDataServiceTest {
         User result = usersDataService.save(newUser);
 
         assertThat(result.getId()).isEqualTo(newUser.getId());
-        assertThat(result.getUserName()).isEqualTo(newUser.getUserName());
+        assertThat(result.getUsername()).isEqualTo(newUser.getUsername());
 
         verify(usersJPARepository, times(1)).save(newUser);
     }
@@ -138,16 +139,16 @@ class UsersDataServiceTest {
     void updateUser_ExistingUser_ShouldUpdateUser() {
         User oldUser = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         User update = User.builder()
                 .id(1L)
-                .userName("Bill Straights")
+                .username("Bill Straights")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(oldUser));
@@ -156,7 +157,7 @@ class UsersDataServiceTest {
         User result = usersDataService.update("1", update);
 
         assertThat(result.getId()).isEqualTo(update.getId());
-        assertThat(result.getUserName()).isEqualTo(update.getUserName());
+        assertThat(result.getUsername()).isEqualTo(update.getUsername());
 
         verify(usersJPARepository, times(1)).findById("1");
         verify(usersJPARepository, times(1)).save(oldUser);
@@ -166,9 +167,9 @@ class UsersDataServiceTest {
     void updateUser_NonExistingUser_ShouldThrowException() {
         User update = User.builder()
                 .id(1L)
-                .userName("Nylon Tusk")
+                .username("Nylon Tusk")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.empty());
@@ -188,9 +189,9 @@ class UsersDataServiceTest {
     void deleteUser_ExistingUser_ShouldDeleteUser() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         given(usersJPARepository.findById("1")).willReturn(Optional.of(user));

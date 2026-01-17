@@ -6,6 +6,7 @@ import com.lunanotes.mapper.TagDTO;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.service.TagsDataService;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,9 +56,9 @@ class TagsControllerTest {
     void setUp() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         this.tags = new ArrayList<>();
         tags.add(new Tag(1L, "test1","#000000", LocalDateTime.now(), LocalDateTime.now(), user));

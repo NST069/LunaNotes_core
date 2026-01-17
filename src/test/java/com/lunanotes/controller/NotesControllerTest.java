@@ -10,6 +10,7 @@ import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.service.NotesDataService;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -59,18 +60,18 @@ class NotesControllerTest {
     void setUp() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         this.users = new ArrayList<>();
         this.users.add(user);
         this.notes = new ArrayList<>();
-        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
-        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null, new HashSet<>()));
-        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
-        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), user, new HashSet<>()));
-        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), null, new HashSet<>()));
+        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
+        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false,  null, new HashSet<>()));
+        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
+        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
+        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, null, new HashSet<>()));
     }
 
     @Test
@@ -250,7 +251,7 @@ class NotesControllerTest {
     }
 
     @Test
-    void getTags_NonExistingNote_ShouldThrowExcepton() throws Exception {
+    void getTags_NonExistingNote_ShouldThrowException() throws Exception {
         given(this.notesDataService.getTags("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))

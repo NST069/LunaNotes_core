@@ -31,6 +31,10 @@ public class Note implements Serializable {
     @Getter @Setter
     private LocalDateTime updatedAt;
 
+    @Getter @Setter
+    @Builder.Default
+    private boolean isPublic = false;
+
     @ManyToOne
     @JoinColumn(name="owner_id")
     @Getter @Setter

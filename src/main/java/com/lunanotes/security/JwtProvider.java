@@ -1,5 +1,6 @@
 package com.lunanotes.security;
 
+import com.lunanotes.mapper.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;
@@ -31,6 +32,7 @@ public class JwtProvider {
                 .issuedAt(now)
                 .expiresAt(now.plus(expiresIn, ChronoUnit.HOURS))
                 .subject(authentication.getName())
+                .claim("userId", ((UserPrincipal)(authentication.getPrincipal())).getUserId())
                 .claim("authorities", authorities)
                 .build();
 

@@ -28,19 +28,19 @@ public class DBDataInitializer implements CommandLineRunner {
 
     @Override
     @Transactional
-    public void run(String... args){
+    public void run(String... args) {
         User user1 = new User();
-        user1.setUserName("User1");
+        user1.setUsername("User1");
         user1.setPassword(this.passwordEncoder.encode("password1"));
-        user1.setRoles("ADMIN USER");
+        user1.setRoles(String.join(" ", UserRole.ADMIN.name(), UserRole.USER.name()));
         User user2 = new User();
-        user2.setUserName("User2");
+        user2.setUsername("User2");
         user2.setPassword(this.passwordEncoder.encode("password2"));
-        user2.setRoles("USER");
+        user2.setRoles(UserRole.USER.name());
         User user3 = new User();
-        user3.setUserName("User3");
+        user3.setUsername("User3");
         user3.setPassword(this.passwordEncoder.encode("password3"));
-        user3.setRoles("USER");
+        user3.setRoles(UserRole.USER.name());
 
         usersJPARepository.save(user1);
         usersJPARepository.save(user2);

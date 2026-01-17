@@ -48,7 +48,7 @@ public class NotesControllerIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActions = this.mockMvc
-                .perform(post(this.baseUrl+"/users/login")
+                .perform(post(this.baseUrl+"/auth/login")
                         .with(httpBasic("User1", "password1")));
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();

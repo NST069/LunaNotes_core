@@ -2,6 +2,7 @@ package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.model.User;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -47,7 +48,7 @@ public class UsersControllerIntegrationTest {
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActions = this.mockMvc
-                .perform(post(this.baseUrl+"/users/login")
+                .perform(post(this.baseUrl+"/auth/login")
                         .with(httpBasic("User1", "password1")));
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
@@ -89,9 +90,9 @@ public class UsersControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void addUser_ShouldSave() throws Exception {
         User user = new User();
-        user.setUserName("test");
+        user.setUsername("test");
         user.setPassword("password");
-        user.setRoles("USER");
+        user.setRoles(UserRole.USER.name());
 
         String json = this.objectMapper.writeValueAsString(user);
 
@@ -100,7 +101,7 @@ public class UsersControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.userName").value("test"));
+                .andExpect(jsonPath("$.data.username").value("test"));
         this.mockMvc.perform(get(this.baseUrl + "/users").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
@@ -112,9 +113,9 @@ public class UsersControllerIntegrationTest {
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void updateUser_ExistingUser_ShouldUpdate() throws Exception {
         User user = new User();
-        user.setUserName("test2");
+        user.setUsername("test2");
         user.setPassword("password");
-        user.setRoles("USER");
+        user.setRoles(UserRole.USER.name());
 
         String json = this.objectMapper.writeValueAsString(user);
 
@@ -123,16 +124,16 @@ public class UsersControllerIntegrationTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.userName").value(user.getUserName()));
+                .andExpect(jsonPath("$.data.username").value(user.getUsername()));
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void updateUser_NonExistingUser_ShouldThrowException() throws Exception {
         User user = new User();
-        user.setUserName("test");
+        user.setUsername("test");
         user.setPassword("password");
-        user.setRoles("USER");
+        user.setRoles(UserRole.USER.name());
 
         String json = this.objectMapper.writeValueAsString(user);
 

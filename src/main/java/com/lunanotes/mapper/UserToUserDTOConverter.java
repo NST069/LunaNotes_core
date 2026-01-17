@@ -9,7 +9,7 @@ public class UserToUserDTOConverter implements Converter<User, UserDTO> {
     @Override
     public UserDTO convert(User source) {
         return new UserDTO(source.getId(),
-                source.getUserName(),
+                source.getUsername(),
                 source.getRoles());
     }
 }

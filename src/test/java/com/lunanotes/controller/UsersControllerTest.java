@@ -5,6 +5,7 @@ import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UsersDataService;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -55,21 +56,21 @@ class UsersControllerTest {
 
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         User user2 = User.builder()
                 .id(2L)
-                .userName("Marc Zucc")
+                .username("Marc Zucc")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
         User user3 = User.builder()
                 .id(3L)
-                .userName("Paul Fool")
+                .username("Paul Fool")
                 .password("password")
-                .roles("USER")
+                .roles(UserRole.USER.name())
                 .build();
 
         users.add(user1);
@@ -86,7 +87,7 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.userName").value("John Doe"));
+                .andExpect(jsonPath("$.data.username").value("John Doe"));
     }
 
     @Test
@@ -118,7 +119,7 @@ class UsersControllerTest {
 
         User savedUser = new User();
         savedUser.setId(1L);
-        savedUser.setUserName("test");
+        savedUser.setUsername("test");
 
         given(this.usersDataService.save(Mockito.any(User.class))).willReturn(savedUser);
 
@@ -127,14 +128,14 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.userName").value("test"));
+                .andExpect(jsonPath("$.data.username").value("test"));
     }
 
     @Test
     void updateUser_ExistingUser_ShouldUpdate() throws Exception {
         User updatedUser = new User();
         updatedUser.setId(1L);
-        updatedUser.setUserName("test");
+        updatedUser.setUsername("test");
 
         UserDTO userDTO = new UserDTO(1, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
@@ -146,7 +147,7 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.userName").value("test"));
+                .andExpect(jsonPath("$.data.username").value("test"));
     }
 
     @Test
