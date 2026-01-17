@@ -20,16 +20,26 @@ public class User implements Serializable {
     private Long id;
 
     @Getter @Setter
-    private String userName;
+    private String username;
 
     @Getter @Setter
-    private String firstName; //?
+    private String email;
 
     @Getter @Setter
-    private String lastName; //?
+    private String password;
 
     @Getter @Setter
-    private String telegramId; //?
+    private String roles;
+
+    @Getter @Setter
+    private String telegramId;
+
+    @Getter @Setter
+    private String telegramUsername;
+
+    @Getter @Setter
+    @Builder.Default
+    private boolean enabled = true;
 
     @Getter @Setter
     private LocalDateTime createdAt;
@@ -37,10 +47,10 @@ public class User implements Serializable {
     @Getter @Setter
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Note> notes = new ArrayList<>();
 
-    @OneToMany(mappedBy = "owner", cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @OneToMany(mappedBy = "owner", cascade = CascadeType.ALL, orphanRemoval = true)
     private final List<Tag> tags = new ArrayList<>();
 
     public void addNote(Note note){
@@ -58,11 +68,4 @@ public class User implements Serializable {
         updatedAt = LocalDateTime.now();
     }
 
-    public int getNumberOfNotes() {
-        return this.notes.size();
-    }
-
-    public int getNumberOfTags() {
-        return this.tags.size();
-    }
 }

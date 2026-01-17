@@ -10,10 +10,13 @@ import java.util.Optional;
 @Repository
 public interface NotesJPARepository extends JpaRepository<Note, String> {
 
+    Optional<Note> findByIdAndOwnerId(Long noteId, Long ownerId);
+
     Optional<Note> findByTitleAndOwnerId(String title, Long ownerId);
 
-    List<Note> findByOwnerId(Long authorId);
+    List<Note> findByOwnerId(Long ownerId);
 
     List<Note> findByTagsId(Long tagId);
+
 
 }

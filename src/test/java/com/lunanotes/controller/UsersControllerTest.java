@@ -1,12 +1,12 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.exception.UserNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UsersDataService;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -16,10 +16,10 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import javax.print.attribute.standard.Media;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -32,7 +32,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class UsersControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -55,24 +56,26 @@ class UsersControllerTest {
 
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
+                .password("password")
+                .roles(UserRole.USER.name())
                 .build();
         User user2 = User.builder()
                 .id(2L)
-                .userName("Marc Zucc")
+                .username("Marc Zucc")
+                .password("password")
+                .roles(UserRole.USER.name())
                 .build();
         User user3 = User.builder()
                 .id(3L)
-                .userName("Paul Fool")
+                .username("Paul Fool")
+                .password("password")
+                .roles(UserRole.USER.name())
                 .build();
 
         users.add(user1);
         users.add(user2);
         users.add(user3);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
@@ -84,12 +87,12 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.userName").value("John Doe"));
+                .andExpect(jsonPath("$.data.username").value("John Doe"));
     }
 
     @Test
     void findById_NonExistingUser_ShouldThrowException() throws Exception{
-        given(this.usersDataService.findById("1")).willThrow(new UserNotFoundException("1"));
+        given(this.usersDataService.findById("1")).willThrow(new ObjectNotFoundException("user", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -111,12 +114,12 @@ class UsersControllerTest {
 
     @Test
     void addUser_ShouldSave() throws Exception {
-        UserDTO userDTO = new UserDTO(0, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(0, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         User savedUser = new User();
         savedUser.setId(1L);
-        savedUser.setUserName("test");
+        savedUser.setUsername("test");
 
         given(this.usersDataService.save(Mockito.any(User.class))).willReturn(savedUser);
 
@@ -125,16 +128,16 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
                 .andExpect(jsonPath("$.data.id").isNotEmpty())
-                .andExpect(jsonPath("$.data.userName").value("test"));
+                .andExpect(jsonPath("$.data.username").value("test"));
     }
 
     @Test
     void updateUser_ExistingUser_ShouldUpdate() throws Exception {
         User updatedUser = new User();
         updatedUser.setId(1L);
-        updatedUser.setUserName("test");
+        updatedUser.setUsername("test");
 
-        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(1, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
@@ -144,16 +147,16 @@ class UsersControllerTest {
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
                 .andExpect(jsonPath("$.data.id").value(1))
-                .andExpect(jsonPath("$.data.userName").value("test"));
+                .andExpect(jsonPath("$.data.username").value("test"));
     }
 
     @Test
     void updateUser_NonExistingUser_ShouldThrowException() throws Exception {
 
-        UserDTO userDTO = new UserDTO(1, "test", 0, 0);
+        UserDTO userDTO = new UserDTO(1, "test", "USER");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
-        given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new UserNotFoundException("1"));
+        given(this.usersDataService.update(eq("1"), Mockito.any(User.class))).willThrow(new ObjectNotFoundException("user", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -175,7 +178,7 @@ class UsersControllerTest {
 
     @Test
     void deleteUser_NonExistingUser_ShouldThrowException() throws Exception {
-        doThrow(new UserNotFoundException("1")).when(this.usersDataService).delete("1");
+        doThrow(new ObjectNotFoundException("user", "1")).when(this.usersDataService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

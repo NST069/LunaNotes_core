@@ -1,7 +1,6 @@
 package com.lunanotes.service;
 
-import com.lunanotes.exception.NoteNotFoundException;
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
@@ -9,6 +8,8 @@ import com.lunanotes.model.User;
 import com.lunanotes.repository.NotesJPARepository;
 import com.lunanotes.repository.TagsJPARepository;
 import com.lunanotes.util.IdWorker;
+import com.lunanotes.util.UserRole;
+import org.assertj.core.api.AssertionsForClassTypes;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -17,16 +18,17 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.util.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.catchThrowable;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
+@ActiveProfiles("test")
 class NotesDataServiceTest {
 
     @Mock
@@ -49,7 +51,9 @@ class NotesDataServiceTest {
     void setUp() {
         User user1 = User.builder()
                 .id(1L)
-                .userName("John Doe")
+                .username("John Doe")
+                .password("password")
+                .roles("USER")
                 .build();
 
         this.users = List.of(user1);
@@ -83,7 +87,9 @@ class NotesDataServiceTest {
     void findById_ExistingNote_ShouldReturnNote() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
+                .password("password")
+                .roles("USER")
                 .build();
         Note note = Note.builder()
                 .id(1L)
@@ -108,11 +114,12 @@ class NotesDataServiceTest {
     void findById_NonExistingNote_ShouldThrowException() {
         given(notesJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
-        Throwable thrown = catchThrowable(()->{
-            Note result = notesDataService.findById("1");
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
+            notesDataService.findById("1");
         });
 
-        assertThat(thrown).isInstanceOf(NoteNotFoundException.class)
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find note with Id 1");
 
         verify(notesJPARepository, times(1)).findById("1");
@@ -192,9 +199,13 @@ class NotesDataServiceTest {
 
         given(notesJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(NoteNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             notesDataService.update("1", update);
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find note with Id 1");
 
         verify(notesJPARepository, times(1)).findById("1");
     }
@@ -218,9 +229,13 @@ class NotesDataServiceTest {
     void deleteNote_NonExistingNote_ShouldThrowException(){
         given(notesJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(NoteNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             notesDataService.delete("1");
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find note with Id 1");
 
         verify(notesJPARepository, times(1)).findById("1");
     }
@@ -229,7 +244,9 @@ class NotesDataServiceTest {
     void getTags_ExistingNote_ShouldReturnTagsList(){
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
+                .password("password")
+                .roles(UserRole.USER.name())
                 .build();
         Note note = Note.builder()
                 .id(1L)
@@ -262,12 +279,16 @@ class NotesDataServiceTest {
     }
 
     @Test
-    void getTags_NonExistingNote_ShouldThrowExcepton(){
+    void getTags_NonExistingNote_ShouldThrowException(){
         given(notesJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
-        assertThrows(NoteNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             notesDataService.getTags("1");
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find note with Id 1");
 
         verify(notesJPARepository, times(1)).findById("1");
     }
@@ -295,9 +316,13 @@ class NotesDataServiceTest {
         given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
         given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(TagNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             notesDataService.addTag("1", "1");
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find tag with Id 1");
 
         verify(tagsJPARepository, times(1)).findById("1");
         verify(notesJPARepository, times(1)).findById("1");
@@ -326,9 +351,13 @@ class NotesDataServiceTest {
         given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
         given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
 
-        assertThrows(TagNotFoundException.class, ()->{
+        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
             notesDataService.removeTag("1", "1");
         });
+
+        AssertionsForClassTypes.assertThat(thrown)
+                .isInstanceOf(ObjectNotFoundException.class)
+                .hasMessage("Could not find tag with Id 1");
 
         verify(tagsJPARepository, times(1)).findById("1");
         verify(notesJPARepository, times(1)).findById("1");

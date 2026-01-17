@@ -1,13 +1,13 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.exception.TagNotFoundException;
+import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.TagDTO;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.service.TagsDataService;
+import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
@@ -17,6 +17,7 @@ import org.springframework.boot.test.autoconfigure.web.servlet.AutoConfigureMock
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
@@ -33,7 +34,8 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
-@AutoConfigureMockMvc
+@AutoConfigureMockMvc(addFilters = false)
+@ActiveProfiles("test")
 class TagsControllerTest {
 
     @Value("${api.endpoint.base-url}")
@@ -54,18 +56,16 @@ class TagsControllerTest {
     void setUp() {
         User user = User.builder()
                 .id(1L)
-                .userName("JohnDoe")
+                .username("JohnDoe")
+                .password("password")
+                .roles(UserRole.USER.name())
                 .build();
         this.tags = new ArrayList<>();
-        tags.add(new Tag(1L, "test1", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(2L, "test2", null, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(3L, "test3", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(4L, "test4", null, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-        tags.add(new Tag(5L, "test5", user, null, "#000000", LocalDateTime.now(), LocalDateTime.now()));
-    }
-
-    @AfterEach
-    void tearDown() {
+        tags.add(new Tag(1L, "test1","#000000", LocalDateTime.now(), LocalDateTime.now(), user));
+        tags.add(new Tag(2L, "test2", "#000000", LocalDateTime.now(), LocalDateTime.now(), null));
+        tags.add(new Tag(3L, "test3", "#000000", LocalDateTime.now(), LocalDateTime.now(), user));
+        tags.add(new Tag(4L, "test4", "#000000", LocalDateTime.now(), LocalDateTime.now(), null));
+        tags.add(new Tag(5L, "test5", "#000000", LocalDateTime.now(), LocalDateTime.now(), user));
     }
 
     @Test
@@ -89,7 +89,7 @@ class TagsControllerTest {
 
     @Test
     void findById_NonExistingTag_ShouldThrowException() throws Exception{
-        given(this.tagsDataService.findById("1")).willThrow(new TagNotFoundException("1"));
+        given(this.tagsDataService.findById("1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -185,7 +185,7 @@ class TagsControllerTest {
         TagDTO tagDTO = new TagDTO(1, "test", "#FFFF00", null);
         String json = this.objectMapper.writeValueAsString(tagDTO);
 
-        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new TagNotFoundException("1"));
+        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -207,7 +207,7 @@ class TagsControllerTest {
 
     @Test
     void deleteTag_NonExistingTag_ShouldThrowException() throws Exception {
-        doThrow(new TagNotFoundException("1")).when(this.tagsDataService).delete("1");
+        doThrow(new ObjectNotFoundException("tag", "1")).when(this.tagsDataService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

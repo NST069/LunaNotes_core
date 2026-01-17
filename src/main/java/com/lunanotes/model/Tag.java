@@ -1,6 +1,5 @@
 package com.lunanotes.model;
 
-
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -22,16 +21,6 @@ public class Tag {
     @Getter @Setter
     private String name;
 
-    @ManyToOne
-    @JoinColumn(name="owner_id")
-    @Getter @Setter
-    private User owner;
-
-    @ManyToMany(mappedBy = "tags")
-    @Getter
-    @Builder.Default
-    private final Set<Note> notes = new HashSet<>();
-
     @Getter @Setter
     private String hexColor;
 
@@ -41,6 +30,15 @@ public class Tag {
     @Getter @Setter
     private LocalDateTime updatedAt;
 
+    @ManyToOne
+    @JoinColumn(name="owner_id")
+    @Getter @Setter
+    private User owner;
+
+    @ManyToMany(mappedBy = "tags", cascade = {CascadeType.DETACH, CascadeType.MERGE, CascadeType.PERSIST, CascadeType.REFRESH})
+    @Getter
+    private final Set<Note> notes = new HashSet<>();
+
     @PrePersist
     protected void onCreate(){
         createdAt = updatedAt = LocalDateTime.now();
@@ -49,5 +47,12 @@ public class Tag {
     @PreUpdate
     protected void onUpdate(){
         updatedAt = LocalDateTime.now();
+    }
+
+    @PreRemove
+    protected void onDelete(){
+        for (Note note : new HashSet<>(notes)) {
+            note.removeTag(this);
+        }
     }
 }
