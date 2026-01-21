@@ -80,10 +80,15 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.PUT, this.baseUrl + "/tags/**").access(this.userRequestAuthorizationManager)
                         .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/tags/**").access(this.userRequestAuthorizationManager)
 
-                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/users").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/users/**").hasAuthority("ROLE_ADMIN")
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/admin/**").hasAuthority("ROLE_"+ UserRole.ADMIN.name())
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/admin/**").hasAuthority("ROLE_"+ UserRole.ADMIN.name())
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/admin/**").hasAuthority("ROLE_"+ UserRole.ADMIN.name())
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/admin/**").hasAuthority("ROLE_"+ UserRole.ADMIN.name())
+
+                        .requestMatchers(HttpMethod.GET, this.baseUrl + "/users/**").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/users/").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.PUT, this.baseUrl + "/users/**").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/users/**").hasAuthority("ROLE_"+ UserRole.USER.name())
 
                         .anyRequest().authenticated()
                 )

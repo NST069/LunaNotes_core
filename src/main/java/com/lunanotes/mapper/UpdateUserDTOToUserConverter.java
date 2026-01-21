@@ -5,13 +5,17 @@ import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 @Component
-public class UserDTOToUserConverter implements Converter<UserDTO, User> {
+public class UpdateUserDTOToUserConverter implements Converter<UpdateUserDTO, User> {
     @Override
-    public User convert(UserDTO source) {
+    public User convert(UpdateUserDTO source) {
         User user = new User();
         if (source.id() > 0) user.setId(source.id());
         user.setUsername(source.username());
+        user.setEmail(source.email());
         user.setRoles(source.roles());
+        user.setEnabled(source.enabled());
+        user.setTelegramId(source.telegramId());
+        user.setTelegramUsername(source.telegramUsername());
 
         return user;
     }

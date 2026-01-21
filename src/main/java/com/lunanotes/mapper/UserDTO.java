@@ -1,10 +1,14 @@
 package com.lunanotes.mapper;
 
-import jakarta.validation.constraints.NotEmpty;
+import java.time.LocalDateTime;
 
 public record UserDTO(long id,
-                      @NotEmpty(message = "username is required.")
                       String username,
-                      @NotEmpty(message = "roles are required.")
-                      String roles) {
+                      String email,
+                      String roles,
+                      boolean enabled,
+                      String telegramId,
+                      String telegramUsername,
+                      LocalDateTime createdAt,
+                      LocalDateTime updatedAt) {
 }

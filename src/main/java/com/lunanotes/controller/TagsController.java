@@ -7,6 +7,7 @@ import com.lunanotes.model.Tag;
 import com.lunanotes.service.TagsDataService;
 import com.lunanotes.util.Result;
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
@@ -14,6 +15,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @RestController
+@RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/tags")
 public class TagsController {
 
@@ -22,12 +24,6 @@ public class TagsController {
     private final TagToTagDTOConverter tagToTagDTOConverter;
 
     private final TagDTOToTagConverter tagDTOToTagConverter;
-
-    public TagsController(TagsDataService tagsDataService, TagToTagDTOConverter tagToTagDTOConverter, TagDTOToTagConverter tagDTOToTagConverter) {
-        this.tagsDataService = tagsDataService;
-        this.tagToTagDTOConverter = tagToTagDTOConverter;
-        this.tagDTOToTagConverter = tagDTOToTagConverter;
-    }
 
     @GetMapping(value = {"/{tagId}", "/tag-{tagId}"})
     public Result findTagById(@PathVariable String tagId) {

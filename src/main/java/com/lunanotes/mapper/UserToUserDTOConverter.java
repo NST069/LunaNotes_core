@@ -10,6 +10,12 @@ public class UserToUserDTOConverter implements Converter<User, UserDTO> {
     public UserDTO convert(User source) {
         return new UserDTO(source.getId(),
                 source.getUsername(),
-                source.getRoles());
+                source.getEmail(),
+                source.getRoles(),
+                source.isEnabled(),
+                source.getTelegramId(),
+                source.getTelegramUsername(),
+                source.getCreatedAt(),
+                source.getUpdatedAt());
     }
 }

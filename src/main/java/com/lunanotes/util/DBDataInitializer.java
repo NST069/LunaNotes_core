@@ -5,7 +5,7 @@ import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.NotesJPARepository;
 import com.lunanotes.repository.TagsJPARepository;
-import com.lunanotes.repository.UsersJPARepository;
+import com.lunanotes.repository.UserJPARepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.context.annotation.Profile;
@@ -20,7 +20,7 @@ public class DBDataInitializer implements CommandLineRunner {
 
     private final NotesJPARepository notesJPARepository;
 
-    private final UsersJPARepository usersJPARepository;
+    private final UserJPARepository userJPARepository;
 
     private final TagsJPARepository tagsJPARepository;
 
@@ -42,9 +42,9 @@ public class DBDataInitializer implements CommandLineRunner {
         user3.setPassword(this.passwordEncoder.encode("password3"));
         user3.setRoles(UserRole.USER.name());
 
-        usersJPARepository.save(user1);
-        usersJPARepository.save(user2);
-        usersJPARepository.save(user3);
+        userJPARepository.save(user1);
+        userJPARepository.save(user2);
+        userJPARepository.save(user3);
 
         Note note1 = new Note();
         note1.setContent("lorem ipsum1");
