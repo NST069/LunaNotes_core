@@ -3,7 +3,7 @@ package com.lunanotes.service;
 import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.repository.TagsJPARepository;
+import com.lunanotes.repository.TagJPARepository;
 import com.lunanotes.security.CurrentUserService;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
@@ -15,30 +15,30 @@ import java.util.List;
 @Service
 @Transactional
 @RequiredArgsConstructor
-public class TagsDataService {
+public class TagService {
 
-    private final TagsJPARepository tagsJPARepository;
+    private final TagJPARepository tagJPARepository;
 
     private final CurrentUserService currentUserService;
 
     public Tag findById(String tagId){
-        return this.tagsJPARepository.findById(tagId)
+        return this.tagJPARepository.findById(tagId)
                 .orElseThrow(()->new ObjectNotFoundException("tag", tagId));
     }
 
     public List<Tag> findAll(){
         Long currentUserId = currentUserService.getCurrentUserId();
-        return this.tagsJPARepository.findByOwnerId(currentUserId);
+        return this.tagJPARepository.findByOwnerId(currentUserId);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
     public List<Tag> findAllAdmin(){
-        return this.tagsJPARepository.findAll();
+        return this.tagJPARepository.findAll();
     }
 
     @PreAuthorize("hasRole('ADMIN', 'MODERATOR')")
     public List<Tag> findByOwnerId(String userId){
-        return this.tagsJPARepository.findByOwnerId(Long.parseLong(userId));
+        return this.tagJPARepository.findByOwnerId(Long.parseLong(userId));
     }
 
     public Tag save(Tag newTag){
@@ -47,44 +47,44 @@ public class TagsDataService {
             newTag.setOwner(currentUser);
         }
 
-        return this.tagsJPARepository.save(newTag);
+        return this.tagJPARepository.save(newTag);
     }
 
     public Tag update(String tagId, Tag tag){
         Long currentUserId = currentUserService.getCurrentUserId();
-        return this.tagsJPARepository.findByIdAndOwnerId(Long.parseLong(tagId), currentUserId)
+        return this.tagJPARepository.findByIdAndOwnerId(Long.parseLong(tagId), currentUserId)
                 .map(oldTag -> {
                     oldTag.setName(tag.getName());
                     oldTag.setHexColor(tag.getHexColor());
 
-                    return this.tagsJPARepository.save(oldTag);
+                    return this.tagJPARepository.save(oldTag);
                 })
                 .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
     }
 
     @PreAuthorize("hasRole('ADMIN', 'MODERATOR')")
     public Tag updateAdmin(String tagId, Tag tag){
-        return this.tagsJPARepository.findById(tagId)
+        return this.tagJPARepository.findById(tagId)
                 .map(oldTag -> {
                     oldTag.setName(tag.getName());
                     oldTag.setHexColor(tag.getHexColor());
 
-                    return this.tagsJPARepository.save(oldTag);
+                    return this.tagJPARepository.save(oldTag);
                 })
                 .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
     }
 
     public void delete(String tagId){
         Long currentUserId = currentUserService.getCurrentUserId();
-        this.tagsJPARepository.findByIdAndOwnerId(Long.parseLong(tagId), currentUserId)
+        this.tagJPARepository.findByIdAndOwnerId(Long.parseLong(tagId), currentUserId)
                 .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
-        this.tagsJPARepository.deleteById(tagId);
+        this.tagJPARepository.deleteById(tagId);
     }
 
     @PreAuthorize("hasRole('ADMIN', 'MODERATOR')")
     public void deleteAdmin(String tagId){
-        this.tagsJPARepository.findById(tagId)
+        this.tagJPARepository.findById(tagId)
                 .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
-        this.tagsJPARepository.deleteById(tagId);
+        this.tagJPARepository.deleteById(tagId);
     }
 }

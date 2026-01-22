@@ -32,7 +32,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Integration tests for Notes API endpoints")
 @Tag("integration")
 @ActiveProfiles("test")
-public class NotesControllerIntegrationTest {
+public class NoteControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -94,7 +94,7 @@ public class NotesControllerIntegrationTest {
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(5)));
+                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
     }
 
     @Test
@@ -127,7 +127,7 @@ public class NotesControllerIntegrationTest {
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(6)));
+                .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
     }
 
     @Test

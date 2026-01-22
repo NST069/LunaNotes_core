@@ -31,7 +31,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DisplayName("Integration tests for Tags API endpoints")
 @Tag("integration")
 @ActiveProfiles("test")
-public class TagsControllerIntegrationTest {
+public class TagControllerIntegrationTest {
 
     @Autowired
     private MockMvc mockMvc;
@@ -93,7 +93,7 @@ public class TagsControllerIntegrationTest {
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
+                .andExpect(jsonPath("$.data", Matchers.hasSize(2)));
     }
 
     @Test
@@ -126,7 +126,7 @@ public class TagsControllerIntegrationTest {
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(4)));
+                .andExpect(jsonPath("$.data", Matchers.hasSize(3)));
     }
 
     @Test

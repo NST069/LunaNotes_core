@@ -8,7 +8,7 @@ import java.util.List;
 import java.util.Optional;
 
 @Repository
-public interface NotesJPARepository extends JpaRepository<Note, String> {
+public interface NoteJPARepository extends JpaRepository<Note, String> {
 
     Optional<Note> findByIdAndOwnerId(Long noteId, Long ownerId);
 

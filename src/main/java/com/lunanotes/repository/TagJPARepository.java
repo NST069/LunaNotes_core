@@ -6,7 +6,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.Optional;
 
-public interface TagsJPARepository extends JpaRepository<Tag, String> {
+public interface TagJPARepository extends JpaRepository<Tag, String> {
 
     Optional<Tag> findByIdAndOwnerId(Long noteId, Long ownerId);
 

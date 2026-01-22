@@ -3,8 +3,8 @@ package com.lunanotes.util;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.repository.NotesJPARepository;
-import com.lunanotes.repository.TagsJPARepository;
+import com.lunanotes.repository.NoteJPARepository;
+import com.lunanotes.repository.TagJPARepository;
 import com.lunanotes.repository.UserJPARepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.boot.CommandLineRunner;
@@ -18,11 +18,11 @@ import org.springframework.transaction.annotation.Transactional;
 @Profile("test")
 public class DBDataInitializer implements CommandLineRunner {
 
-    private final NotesJPARepository notesJPARepository;
+    private final NoteJPARepository noteJPARepository;
 
     private final UserJPARepository userJPARepository;
 
-    private final TagsJPARepository tagsJPARepository;
+    private final TagJPARepository tagJPARepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -62,11 +62,11 @@ public class DBDataInitializer implements CommandLineRunner {
         note5.setContent("lorem ipsum5");
         note5.setTitle("test5");
 
-        notesJPARepository.save(note1);
-        notesJPARepository.save(note2);
-        notesJPARepository.save(note3);
-        notesJPARepository.save(note4);
-        notesJPARepository.save(note5);
+        noteJPARepository.save(note1);
+        noteJPARepository.save(note2);
+        noteJPARepository.save(note3);
+        noteJPARepository.save(note4);
+        noteJPARepository.save(note5);
 
         Tag tag1 = new Tag();
         tag1.setName("tag1");
@@ -81,9 +81,9 @@ public class DBDataInitializer implements CommandLineRunner {
         tag3.setHexColor("#FF00FF");
         tag3.setOwner(user2);
 
-        tagsJPARepository.save(tag1);
-        tagsJPARepository.save(tag2);
-        tagsJPARepository.save(tag3);
+        tagJPARepository.save(tag1);
+        tagJPARepository.save(tag2);
+        tagJPARepository.save(tag3);
 
         user1.addNote(note1);
         user1.addNote(note2);

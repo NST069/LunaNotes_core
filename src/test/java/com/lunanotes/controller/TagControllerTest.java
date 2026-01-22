@@ -5,7 +5,7 @@ import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.mapper.TagDTO;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.service.TagsDataService;
+import com.lunanotes.service.TagService;
 import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -36,7 +36,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
-class TagsControllerTest {
+class TagControllerTest {
 
     @Value("${api.endpoint.base-url}")
     String baseUrl;
@@ -45,7 +45,7 @@ class TagsControllerTest {
     MockMvc mockMvc;
 
     @MockitoBean
-    TagsDataService tagsDataService;
+    TagService tagService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -70,7 +70,7 @@ class TagsControllerTest {
 
     @Test
     void findById_ExistingTag_ShouldReturnTag() throws Exception{
-        given(this.tagsDataService.findById("1")).willReturn(this.tags.get(0));
+        given(this.tagService.findById("1")).willReturn(this.tags.get(0));
 
         this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -89,7 +89,7 @@ class TagsControllerTest {
 
     @Test
     void findById_NonExistingTag_ShouldThrowException() throws Exception{
-        given(this.tagsDataService.findById("1")).willThrow(new ObjectNotFoundException("tag", "1"));
+        given(this.tagService.findById("1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -106,7 +106,7 @@ class TagsControllerTest {
 
     @Test
     void findAllTags_ShouldReturnList() throws Exception {
-        given(this.tagsDataService.findAll()).willReturn(this.tags);
+        given(this.tagService.findAll()).willReturn(this.tags);
 
         this.mockMvc.perform(get(baseUrl+"/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -124,7 +124,7 @@ class TagsControllerTest {
         List<Tag> filteredTags = this.tags.stream()
                 .filter(tag -> ((tag.getOwner() != null) ? tag.getOwner().getId() : 0) == 1).toList();
 
-        given(this.tagsDataService.findByOwnerId("1")).willReturn(filteredTags);
+        given(this.tagService.findByOwnerId("1")).willReturn(filteredTags);
 
         this.mockMvc.perform(get(baseUrl+"/tags/user-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -147,7 +147,7 @@ class TagsControllerTest {
         savedTag.setName("test");
         savedTag.setHexColor("#FF0000");
 
-        given(this.tagsDataService.save(Mockito.any(Tag.class))).willReturn(savedTag);
+        given(this.tagService.save(Mockito.any(Tag.class))).willReturn(savedTag);
 
         this.mockMvc.perform(post(baseUrl+"/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -168,7 +168,7 @@ class TagsControllerTest {
         TagDTO tagDTO = new TagDTO(1, "test", "#00FFFF", null);
         String json = this.objectMapper.writeValueAsString(tagDTO);
 
-        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willReturn(updatedTag);
+        given(this.tagService.update(eq("1"), Mockito.any(Tag.class))).willReturn(updatedTag);
 
         this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -185,7 +185,7 @@ class TagsControllerTest {
         TagDTO tagDTO = new TagDTO(1, "test", "#FFFF00", null);
         String json = this.objectMapper.writeValueAsString(tagDTO);
 
-        given(this.tagsDataService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new ObjectNotFoundException("tag", "1"));
+        given(this.tagService.update(eq("1"), Mockito.any(Tag.class))).willThrow(new ObjectNotFoundException("tag", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/tags/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -196,7 +196,7 @@ class TagsControllerTest {
 
     @Test
     void deleteTag_ExistingTag_ShouldDelete() throws Exception {
-        doNothing().when(this.tagsDataService).delete("1");
+        doNothing().when(this.tagService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -207,7 +207,7 @@ class TagsControllerTest {
 
     @Test
     void deleteTag_NonExistingTag_ShouldThrowException() throws Exception {
-        doThrow(new ObjectNotFoundException("tag", "1")).when(this.tagsDataService).delete("1");
+        doThrow(new ObjectNotFoundException("tag", "1")).when(this.tagService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

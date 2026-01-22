@@ -5,8 +5,9 @@ import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.repository.NotesJPARepository;
-import com.lunanotes.repository.TagsJPARepository;
+import com.lunanotes.repository.NoteJPARepository;
+import com.lunanotes.repository.TagJPARepository;
+import com.lunanotes.security.CurrentUserService;
 import com.lunanotes.util.IdWorker;
 import com.lunanotes.util.UserRole;
 import org.assertj.core.api.AssertionsForClassTypes;
@@ -19,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.*;
 
@@ -29,19 +31,22 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
-class NotesDataServiceTest {
+class NoteServiceTest {
 
     @Mock
-    NotesJPARepository notesJPARepository;
+    NoteJPARepository noteJPARepository;
 
     @Mock
-    TagsJPARepository tagsJPARepository;
+    TagJPARepository tagJPARepository;
+
+    @Mock
+    CurrentUserService currentUserService;
 
     @Mock
     IdWorker idWorker;
 
     @InjectMocks
-    NotesDataService notesDataService;
+    NoteService noteService;
 
     List<Note> notes;
 
@@ -98,41 +103,44 @@ class NotesDataServiceTest {
                 .content("Lorem ipsum dolor sit amet")
                 .build();
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(note));
+        given(noteJPARepository.findById("1")).willReturn(Optional.of(note));
 
-        Note result = notesDataService.findById("1");
+        Note result = noteService.findById("1");
 
         assertThat(result.getId()).isEqualTo(note.getId());
         assertThat(result.getOwner().getId()).isEqualTo(user.getId());
         assertThat(result.getTitle()).isEqualTo(note.getTitle());
         assertThat(result.getContent()).isEqualTo(note.getContent());
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findById("1");
     }
 
     @Test
     void findById_NonExistingNote_ShouldThrowException() {
-        given(notesJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
+        given(noteJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.findById("1");
+            noteService.findById("1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find note with Id 1");
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findById("1");
     }
 
     @Test
-    void findAllNotes_ShouldReturnList(){
-        given(notesJPARepository.findAll()).willReturn(this.notes);
+    void findAllNotes_ShouldReturnList() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        List<Note> currentUserNotes = this.notes.stream()
+                .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
+        given(noteJPARepository.findByOwnerId(1L)).willReturn(currentUserNotes);
 
-        List<Note> result = notesDataService.findAll();
+        List<Note> result = noteService.findAll();
 
-        assertThat(result.size()).isEqualTo(this.notes.size());
-        verify(notesJPARepository, times(1)).findAll();
+        assertThat(result.size()).isEqualTo(currentUserNotes.size());
+        verify(noteJPARepository, times(1)).findByOwnerId(1L);
     }
 
     @Test
@@ -140,37 +148,35 @@ class NotesDataServiceTest {
         List<Note> filteredNotes = this.notes.stream()
                 .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
 
-        given(notesJPARepository.findByOwnerId(1L)).willReturn(filteredNotes);
+        given(noteJPARepository.findByOwnerId(1L)).willReturn(filteredNotes);
 
-        List<Note> result = notesDataService.findByOwnerId("1");
+        List<Note> result = noteService.findByOwnerId("1");
 
         assertThat(result.size()).isEqualTo(filteredNotes.size());
-        verify(notesJPARepository, times(1)).findByOwnerId(1L);
+        verify(noteJPARepository, times(1)).findByOwnerId(1L);
     }
 
     @Test
-    void saveNote_ShouldSave(){
+    void saveNote_ShouldSave() {
         Note newNote = new Note();
-        newNote.setId(123456L);
         newNote.setTitle("test");
         newNote.setContent("lorem ipsum");
 
-        //given(idWorker.nextId()).willReturn(123456L);
-        given(notesJPARepository.save(newNote)).willReturn(newNote);
+        given(noteJPARepository.save(newNote)).willReturn(newNote);
 
-        Note result = notesDataService.save(newNote);
+        Note result = noteService.save(newNote);
 
-        assertThat(result.getId()).isEqualTo(123456L);
+        assertThat(result.getId()).isEqualTo(newNote.getId());
         assertThat(result.getTitle()).isEqualTo(newNote.getTitle());
         assertThat(result.getContent()).isEqualTo(newNote.getContent());
 
-        verify(notesJPARepository, times(1)).save(newNote);
+        verify(noteJPARepository, times(1)).save(newNote);
     }
 
     @Test
-    void updateNote_ExistingNote_ShouldUpdate(){
+    void updateNote_ExistingNote_ShouldUpdate() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Note oldNote = new Note();
-        oldNote.setId(1L);
         oldNote.setTitle("test");
         oldNote.setContent("lorem ipsum");
 
@@ -179,69 +185,72 @@ class NotesDataServiceTest {
         update.setTitle("test");
         update.setContent("lorem ipsum2");
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(oldNote));
-        given(notesJPARepository.save(oldNote)).willReturn(oldNote);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(oldNote));
+        given(noteJPARepository.save(oldNote)).willReturn(oldNote);
 
-        Note result = notesDataService.update("1", update);
+        Note result = noteService.update("1", update);
 
         assertThat(result.getId()).isEqualTo(update.getId());
         assertThat(result.getContent()).isEqualTo(update.getContent());
 
-        verify(notesJPARepository, times(1)).findById("1");
-        verify(notesJPARepository, times(1)).save(oldNote);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(noteJPARepository, times(1)).save(oldNote);
     }
 
     @Test
-    void updateNote_NonExistingNote_ShouldThrowException(){
+    void updateNote_NonExistingNote_ShouldThrowException() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Note update = new Note();
         update.setTitle("test");
         update.setContent("lorem ipsum2");
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.empty());
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.update("1", update);
+            noteService.update("1", update);
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find note with Id 1");
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
-    void deleteNote_ExistingNote_ShouldDelete(){
+    void deleteNote_ExistingNote_ShouldDelete() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Note note = new Note();
-        note.setId(1L);
         note.setTitle("test");
         note.setContent("lorem ipsum");
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(note));
-        doNothing().when(notesJPARepository).deleteById("1");
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(note));
+        doNothing().when(noteJPARepository).deleteById("1");
 
-        notesDataService.delete("1");
+        noteService.delete("1");
 
-        verify(notesJPARepository, times(1)).deleteById("1");
+        verify(noteJPARepository, times(1)).deleteById("1");
     }
 
     @Test
-    void deleteNote_NonExistingNote_ShouldThrowException(){
-        given(notesJPARepository.findById("1")).willReturn(Optional.empty());
+    void deleteNote_NonExistingNote_ShouldThrowException() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.delete("1");
+            noteService.delete("1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find note with Id 1");
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
-    void getTags_ExistingNote_ShouldReturnTagsList(){
+    void getTags_ExistingNote_ShouldReturnTagsList() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         User user = User.builder()
                 .id(1L)
                 .username("JohnDoe")
@@ -269,139 +278,147 @@ class NotesDataServiceTest {
         note.addTag(tag1);
         note.addTag(tag2);
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(note));
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(note));
 
-        Set<Tag> result = notesDataService.getTags("1");
+        Set<Tag> result = noteService.getTags("1");
 
         assertThat(result.size()).isEqualTo(2);
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
-    void getTags_NonExistingNote_ShouldThrowException(){
-        given(notesJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
+    void getTags_NonExistingNote_ShouldThrowException() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(noteJPARepository.findByIdAndOwnerId(Mockito.any(Long.class), eq(1L))).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.getTags("1");
+            noteService.getTags("1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find note with Id 1");
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void addTag_ExistingTag_ShouldAddTag() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findById("1")).willReturn(Optional.of(tag));
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(tag));
 
-        notesDataService.addTag("1", "1");
+        noteService.addTag("1", "1");
 
         assertThat(notes.get(0).getTags()).contains(tag);
 
-        verify(tagsJPARepository, times(1)).findById("1");
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void addTag_NonExistingTag_ShouldThrowException() {
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.addTag("1", "1");
+            noteService.addTag("1", "1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
-        verify(tagsJPARepository, times(1)).findById("1");
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void removeTag_ExistingTag_ShouldDeleteTag() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findById("1")).willReturn(Optional.of(tag));
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(tag));
 
-        notesDataService.removeTag("1", "1");
+        noteService.removeTag("1", "1");
 
         assertThat(notes.get(0).getTags()).doesNotContain(tag);
 
-        verify(tagsJPARepository, times(1)).findById("1");
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void removeTag_NonExistingTag_ShouldThrowException() {
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            notesDataService.removeTag("1", "1");
+            noteService.removeTag("1", "1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
-        verify(tagsJPARepository, times(1)).findById("1");
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void createAndAddTag_ExistingTag_ShouldAddTag() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.of(tag));
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.of(tag));
 
-        notesDataService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
+        noteService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
 
         assertThat(notes.get(0).getTags()).contains(tag);
 
-        verify(tagsJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void createAndAddTag_NonExistingTag_ShouldCreateAndAddTag() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.empty());
-        given(tagsJPARepository.save(any(Tag.class))).willReturn(tag);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.empty());
+        given(tagJPARepository.save(any(Tag.class))).willReturn(tag);
 
-        notesDataService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
+        noteService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
 
         assertThat(notes.get(0).getTags()).contains(tag);
 
-        verify(tagsJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void addMultipleTags_ShouldAddExistingTags() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag1 = Tag.builder()
                 .id(1L)
                 .name("cats")
@@ -420,13 +437,13 @@ class NotesDataServiceTest {
 
         List<Tag> tags = List.of(tag1, tag2, tag3);
 
-        given(notesJPARepository.findById("1")).willReturn(Optional.of(notes.get(0)));
-        given(tagsJPARepository.findAllById(List.of("1", "2", "3"))).willReturn(tags);
+        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
+        given(tagJPARepository.findAllById(List.of("1", "2", "3"))).willReturn(tags);
 
-        notesDataService.addMultipleTags("1", List.of("1", "2", "3"));
+        noteService.addMultipleTags("1", List.of("1", "2", "3"));
 
         assertThat(notes.get(0).getTags()).containsAll(tags);
 
-        verify(notesJPARepository, times(1)).findById("1");
+        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 }

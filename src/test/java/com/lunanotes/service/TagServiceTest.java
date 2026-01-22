@@ -4,10 +4,10 @@ import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.repository.TagsJPARepository;
+import com.lunanotes.repository.TagJPARepository;
+import com.lunanotes.security.CurrentUserService;
 import com.lunanotes.util.UserRole;
 import org.assertj.core.api.AssertionsForClassTypes;
-import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -28,13 +28,16 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 @ActiveProfiles("test")
-class TagsDataServiceTest {
+class TagServiceTest {
 
     @Mock
-    TagsJPARepository tagsJPARepository;
+    TagJPARepository tagJPARepository;
+
+    @Mock
+    CurrentUserService currentUserService;
 
     @InjectMocks
-    TagsDataService tagsDataService;
+    TagService tagService;
 
     List<Note> notes;
     List<User> users;
@@ -113,51 +116,51 @@ class TagsDataServiceTest {
 
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void findById_ExistingTag_ShouldReturnTag() {
+        //given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(tagsJPARepository.findById("1")).willReturn(Optional.of(tag));
+        given(tagJPARepository.findById("1")).willReturn(Optional.of(tag));
 
-        Tag result = tagsDataService.findById("1");
+        Tag result = tagService.findById("1");
 
         assertThat(result.getId()).isEqualTo(tag.getId());
         assertThat(result.getName()).isEqualTo(tag.getName());
         assertThat(result.getOwner()).isEqualTo(tag.getOwner());
 
-        verify(tagsJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findById("1");
     }
 
     @Test
     void findById_NonExistingTag_ShouldThrowException() {
-        given(tagsJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
+        given(tagJPARepository.findById(Mockito.any(String.class))).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            tagsDataService.findById("1");
+            tagService.findById("1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
-        verify(tagsJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findById("1");
     }
 
     @Test
-    void findAllTags_ShouldReturnList(){
-        given(tagsJPARepository.findAll()).willReturn(this.tags);
+    void findAllTags_ShouldReturnList() {
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        List<Tag> currentUserTags = this.tags.stream()
+                .filter(tag -> ((tag.getOwner() != null) ? tag.getOwner().getId() : 0) == 1).toList();
+        given(tagJPARepository.findByOwnerId(1L)).willReturn(currentUserTags);
 
-        List<Tag> result = tagsDataService.findAll();
+        List<Tag> result = tagService.findAll();
 
-        assertThat(result.size()).isEqualTo(this.tags.size());
-        verify(tagsJPARepository, times(1)).findAll();
+        assertThat(result.size()).isEqualTo(currentUserTags.size());
+        verify(tagJPARepository, times(1)).findByOwnerId(1L);
     }
 
     @Test
@@ -165,34 +168,34 @@ class TagsDataServiceTest {
         List<Tag> filteredTags = this.tags.stream()
                 .filter(tag -> ((tag.getOwner() != null) ? tag.getOwner().getId() : 0) == 1).toList();
 
-        given(tagsJPARepository.findByOwnerId(1L)).willReturn(filteredTags);
+        given(tagJPARepository.findByOwnerId(1L)).willReturn(filteredTags);
 
-        List<Tag> result = tagsDataService.findByOwnerId("1");
+        List<Tag> result = tagService.findByOwnerId("1");
 
         assertThat(result.size()).isEqualTo(filteredTags.size());
-        verify(tagsJPARepository, times(1)).findByOwnerId(1L);
+        verify(tagJPARepository, times(1)).findByOwnerId(1L);
     }
 
     @Test
     void saveTag_shouldSave() {
         Tag newTag = new Tag();
-        newTag.setId(123456L);
         newTag.setName("test");
         newTag.setOwner(users.get(0));
 
-        given(tagsJPARepository.save(newTag)).willReturn(newTag);
+        given(tagJPARepository.save(newTag)).willReturn(newTag);
 
-        Tag result = tagsJPARepository.save(newTag);
+        Tag result = tagJPARepository.save(newTag);
 
-        assertThat(result.getId()).isEqualTo(123456L);
+        assertThat(result.getId()).isEqualTo(newTag.getId());
         assertThat(result.getName()).isEqualTo(newTag.getName());
         assertThat(result.getOwner()).isEqualTo(newTag.getOwner());
 
-        verify(tagsJPARepository, times(1)).save(newTag);
+        verify(tagJPARepository, times(1)).save(newTag);
     }
 
     @Test
     void updateTag_ExistingTag_ShouldUpdate(){
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag oldTag = new Tag();
         oldTag.setId(1L);
         oldTag.setName("test");
@@ -203,65 +206,68 @@ class TagsDataServiceTest {
         update.setName("test2");
         update.setOwner(oldTag.getOwner());
 
-        given(tagsJPARepository.findById("1")).willReturn(Optional.of(oldTag));
-        given(tagsJPARepository.save(oldTag)).willReturn(oldTag);
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(oldTag));
+        given(tagJPARepository.save(oldTag)).willReturn(oldTag);
 
-        Tag result = tagsDataService.update("1", update);
+        Tag result = tagService.update("1", update);
 
         assertThat(result.getId()).isEqualTo(update.getId());
         assertThat(result.getName()).isEqualTo(update.getName());
 
-        verify(tagsJPARepository, times(1)).findById("1");
-        verify(tagsJPARepository, times(1)).save(oldTag);
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(tagJPARepository, times(1)).save(oldTag);
     }
 
     @Test
     void updateTag_NonExistingTag_ShouldThrowException(){
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag update = new Tag();
         update.setId(1L);
         update.setName("test2");
         update.setOwner(users.get(0));
 
-        given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            tagsDataService.update("1", update);
+            tagService.update("1", update);
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
-        verify(tagsJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
     void deleteTag_ExistingTag_ShouldDelete(){
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
-        given(tagsJPARepository.findById("1")).willReturn(Optional.of(tag));
-        doNothing().when(tagsJPARepository).deleteById("1");
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(tag));
+        doNothing().when(tagJPARepository).deleteById("1");
 
-        tagsDataService.delete("1");
+        tagService.delete("1");
 
-        verify(tagsJPARepository, times(1)).deleteById("1");
+        verify(tagJPARepository, times(1)).deleteById("1");
     }
 
     @Test
     void deleteTag_NonExistingTag_ShouldThrowException(){
-        given(tagsJPARepository.findById("1")).willReturn(Optional.empty());
+        given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
 
         Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            tagsDataService.delete("1");
+            tagService.delete("1");
         });
 
         AssertionsForClassTypes.assertThat(thrown)
                 .isInstanceOf(ObjectNotFoundException.class)
                 .hasMessage("Could not find tag with Id 1");
 
-        verify(tagsJPARepository, times(1)).findById("1");
+        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 }
