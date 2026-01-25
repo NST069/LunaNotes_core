@@ -47,14 +47,6 @@ public interface AdminUserAPI {
                                                     """
                                     )
                             )
-                    ),
-                    @ApiResponse(
-                            responseCode = "400",
-                            description = "Представлены невалидные аргументы",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = Result.class)
-                            )
                     )
             }
     )

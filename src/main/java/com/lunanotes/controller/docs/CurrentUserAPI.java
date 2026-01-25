@@ -57,11 +57,20 @@ public interface CurrentUserAPI {
                     description = "Public User Data",
                     required = true,
                     content = @Content(
-                            schema = @Schema(implementation = UpdateUserDTO.class),
-                            examples = @ExampleObject(
-                                    summary = "Success",
-                                    description = "Update Success",
-                                    value = """
+                            schema = @Schema(implementation = UpdateUserDTO.class)
+                    )
+            ),
+            responses = {
+                    @ApiResponse(
+                            responseCode = "200",
+                            description = "Update Success",
+                            content = @Content(
+                                    mediaType = "application/json",
+                                    schema = @Schema(implementation = Result.class),
+                                    examples = @ExampleObject(
+                                            summary = "Success",
+                                            description = "Update Success",
+                                            value = """
                                             {
                                               	"flag": true,
                                               	"code": 200,
@@ -79,16 +88,7 @@ public interface CurrentUserAPI {
                                               	}
                                             }
                                             """
-                            )
-                    )
-            ),
-            responses = {
-                    @ApiResponse(
-                            responseCode = "200",
-                            description = "Update Success",
-                            content = @Content(
-                                    mediaType = "application/json",
-                                    schema = @Schema(implementation = Result.class)
+                                    )
                             )
                     )
             }
