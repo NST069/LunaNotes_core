@@ -1,5 +1,6 @@
 package com.lunanotes.controller;
 
+import com.lunanotes.controller.docs.CurrentUserAPI;
 import com.lunanotes.mapper.*;
 import com.lunanotes.model.User;
 import com.lunanotes.security.CurrentUserService;
@@ -14,7 +15,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/users/me")
-public class CurrentUserController {
+public class CurrentUserController implements CurrentUserAPI {
 
     private final CurrentUserService currentUserService;
 

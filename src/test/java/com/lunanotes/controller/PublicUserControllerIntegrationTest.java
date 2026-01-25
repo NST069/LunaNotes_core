@@ -36,18 +36,18 @@ class PublicUserControllerIntegrationTest {
     @Autowired
     private MockMvc mockMvc;
 
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/users")
     private String baseUrl;
+
+    @Value("${api.endpoint.base-url}/auth/login")
+    private String authUrl;
 
     private String token;
 
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActions = this.mockMvc
-                .perform(post(this.baseUrl+"/auth/login")
+                .perform(post(this.authUrl)
                         .with(httpBasic("User2", "password2")));
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
@@ -59,7 +59,7 @@ class PublicUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void findUserById_ExistingUser_ShouldReturnUser() throws Exception{
-        this.mockMvc.perform(get(this.baseUrl + "/users/1").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(get(this.baseUrl + "/1").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -68,7 +68,7 @@ class PublicUserControllerIntegrationTest {
 
     @Test
     void findUserById_NonExistingUser_ShouldThrowException() throws Exception{
-        this.mockMvc.perform(get(baseUrl+"/users/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(get(baseUrl+"/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 9999"))

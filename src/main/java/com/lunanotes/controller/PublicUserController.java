@@ -1,5 +1,6 @@
 package com.lunanotes.controller;
 
+import com.lunanotes.controller.docs.PublicUserAPI;
 import com.lunanotes.mapper.PublicUserDTO;
 import com.lunanotes.mapper.UserToPublicUserDTOConverter;
 import com.lunanotes.model.User;
@@ -12,7 +13,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/users")
-public class PublicUserController {
+public class PublicUserController implements PublicUserAPI {
 
     private final UserService userService;
 

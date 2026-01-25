@@ -17,3 +17,31 @@ security:
       jwt:
         authorities-claim-name: authorities
         authority-prefix: ""
+
+springdoc:
+  paths-to-match: /api/v1/**
+  use-hateoas: true
+  default-produces-media-type: application/json
+  default-consumes-media-type: application/json
+  default-support-form-data: false
+  model-and-view-allowed: true
+  api-docs:
+    enabled: true
+    path: /api-docs
+    groups:
+      enabled: true
+  swagger-ui:
+    enabled: true
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+    disable-swagger-default-url: true
+    display-request-duration: true
+    doc-expansion: none
+    urls:
+      - url: /api-docs
+        name: LunaNotes API
+  data-rest:
+    enabled: false
+  actuator:
+    enabled: false

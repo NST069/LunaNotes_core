@@ -2,8 +2,8 @@ package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.exception.ObjectNotFoundException;
+import com.lunanotes.mapper.CreateUserDTO;
 import com.lunanotes.mapper.UpdateUserDTO;
-import com.lunanotes.mapper.UserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
 import com.lunanotes.util.UserRole;
@@ -37,7 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class AdminUserControllerTest {
 
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/admin/users")
     String baseUrl;
 
     @Autowired
@@ -80,10 +80,10 @@ class AdminUserControllerTest {
     }
 
     @Test
-    void findById_ExistingUser_ShouldReturnUser() throws Exception {
+    void findUserById_ExistingUser_ShouldReturnUser() throws Exception {
         given(this.userService.findById("1")).willReturn(this.users.get(0));
 
-        this.mockMvc.perform(get(baseUrl + "/admin/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -92,10 +92,10 @@ class AdminUserControllerTest {
     }
 
     @Test
-    void findById_NonExistingUser_ShouldThrowException() throws Exception {
+    void findUserById_NonExistingUser_ShouldThrowException() throws Exception {
         given(this.userService.findById("1")).willThrow(new ObjectNotFoundException("user", "1"));
 
-        this.mockMvc.perform(get(baseUrl + "/admin/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))
@@ -106,7 +106,7 @@ class AdminUserControllerTest {
     void findAll_ShouldReturnList() throws Exception {
         given(this.userService.findAll()).willReturn(this.users);
 
-        this.mockMvc.perform(get(baseUrl + "/admin/users").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
@@ -115,7 +115,7 @@ class AdminUserControllerTest {
 
     @Test
     void addUser_ShouldSave() throws Exception {
-        UserDTO userDTO = new UserDTO(0, "test", "test@mail.ru", "USER", true, "", "", LocalDateTime.now(), LocalDateTime.now());
+        CreateUserDTO userDTO = new CreateUserDTO( "test", "test123", "test@mail.ru", "", "");
         String json = this.objectMapper.writeValueAsString(userDTO);
 
         User savedUser = new User();
@@ -124,7 +124,7 @@ class AdminUserControllerTest {
 
         given(this.userService.save(Mockito.any(User.class))).willReturn(savedUser);
 
-        this.mockMvc.perform(post(baseUrl + "/admin/users").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl).contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -138,12 +138,12 @@ class AdminUserControllerTest {
         updatedUser.setId(1L);
         updatedUser.setUsername("test");
 
-        UpdateUserDTO updateUserDTO = new UpdateUserDTO(0, "test", "test@mail.ru", "USER", true, "", "");
+        UpdateUserDTO updateUserDTO = new UpdateUserDTO("test", "", "test@mail.ru", "USER", true, "", "");
         String json = this.objectMapper.writeValueAsString(updateUserDTO);
 
         given(this.userService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
 
-        this.mockMvc.perform(put(baseUrl + "/admin/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl + "/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -153,12 +153,12 @@ class AdminUserControllerTest {
 
     @Test
     void updateUser_NonExistingUser_ShouldThrowException() throws Exception {
-        UpdateUserDTO updateUserDTO = new UpdateUserDTO(0, "test", "test@mail.ru", "USER", true, "", "");
+        UpdateUserDTO updateUserDTO = new UpdateUserDTO("test", "", "test@mail.ru", "USER", true, "", "");
         String json = this.objectMapper.writeValueAsString(updateUserDTO);
 
         given(this.userService.update(eq("1"), Mockito.any(User.class))).willThrow(new ObjectNotFoundException("user", "1"));
 
-        this.mockMvc.perform(put(baseUrl + "/admin/users/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl + "/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))
@@ -169,7 +169,7 @@ class AdminUserControllerTest {
     void deleteUser_ExistingUser_ShouldDelete() throws Exception {
         doNothing().when(this.userService).delete("1");
 
-        this.mockMvc.perform(delete(baseUrl + "/admin/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -180,7 +180,7 @@ class AdminUserControllerTest {
     void deleteUser_NonExistingUser_ShouldThrowException() throws Exception {
         doThrow(new ObjectNotFoundException("user", "1")).when(this.userService).delete("1");
 
-        this.mockMvc.perform(delete(baseUrl + "/admin/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 1"))

@@ -40,15 +40,18 @@ class CurrentUserControllerIntegrationTest {
     @Autowired
     private ObjectMapper objectMapper;
 
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/users/me")
     private String baseUrl;
+
+    @Value("${api.endpoint.base-url}/auth/login")
+    private String authUrl;
 
     private String token;
 
     @BeforeEach
     void setUp() throws Exception {
         ResultActions resultActions = this.mockMvc
-                .perform(post(this.baseUrl+"/auth/login")
+                .perform(post(this.authUrl)
                         .with(httpBasic("User2", "password2")));
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
@@ -60,7 +63,7 @@ class CurrentUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void getCurrentUser_ShouldReturnUser() throws Exception {
-        this.mockMvc.perform(get(this.baseUrl + "/users/me").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Current user"))
@@ -77,7 +80,7 @@ class CurrentUserControllerIntegrationTest {
 
         String json = this.objectMapper.writeValueAsString(user);
 
-        this.mockMvc.perform(put(baseUrl+"/users/me").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(put(baseUrl).contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -88,11 +91,11 @@ class CurrentUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void deleteCurrentUser_ShouldInactivate() throws Exception {
-        this.mockMvc.perform(delete(this.baseUrl + "/users/me").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(delete(this.baseUrl).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Account inactivated"));
-        this.mockMvc.perform(get(this.baseUrl + "/users/me").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(get(this.baseUrl).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Current user"))

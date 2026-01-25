@@ -33,7 +33,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class CurrentUserControllerTest {
 
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/users/me")
     String baseUrl;
 
     @Autowired
@@ -82,7 +82,7 @@ class CurrentUserControllerTest {
     void getCurrentUser_ShouldReturnUser() throws Exception{
         given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
 
-        this.mockMvc.perform(get(baseUrl+"/users/me").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Current user"))
@@ -98,12 +98,12 @@ class CurrentUserControllerTest {
         updatedUser.setId(1L);
         updatedUser.setUsername("test");
 
-        UpdateUserDTO updateUserDTO = new UpdateUserDTO(1, "test", "test@mail.ru", "USER", true, "", "");
+        UpdateUserDTO updateUserDTO = new UpdateUserDTO("test", "", "test@mail.ru", "USER", true, "", "");
         String json = this.objectMapper.writeValueAsString(updateUserDTO);
 
         given(this.userService.update(eq("1"), Mockito.any(User.class))).willReturn(updatedUser);
 
-        this.mockMvc.perform(put(baseUrl+"/users/me").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl).contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -116,7 +116,7 @@ class CurrentUserControllerTest {
         given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
         doNothing().when(this.userService).inactivate("1");
 
-        this.mockMvc.perform(delete(baseUrl+"/users/me").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Account inactivated"))

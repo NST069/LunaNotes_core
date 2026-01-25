@@ -27,7 +27,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @ActiveProfiles("test")
 class PublicUserControllerTest {
 
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/users")
     String baseUrl;
 
     @Autowired
@@ -70,7 +70,7 @@ class PublicUserControllerTest {
     void findById_ExistingUser_ShouldReturnUser() throws Exception{
         given(this.userService.findById("1")).willReturn(this.users.get(0));
 
-        this.mockMvc.perform(get(baseUrl+"/users/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl+"/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))

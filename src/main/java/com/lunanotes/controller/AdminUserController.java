@@ -1,5 +1,6 @@
 package com.lunanotes.controller;
 
+import com.lunanotes.controller.docs.AdminUserAPI;
 import com.lunanotes.mapper.*;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
@@ -14,13 +15,15 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("${api.endpoint.base-url}/admin/users")
-public class AdminUserController {
+public class AdminUserController implements AdminUserAPI {
 
     private final UserService userService;
 
     private final UserToUserDTOConverter userToUserDTOConverter;
 
     private final UpdateUserDTOToUserConverter updateUserDTOToUserConverter;
+
+    private final CreateUserDTOToUserConverter createUserDTOToUserConverter;
 
     @GetMapping("/{userId}")
     public Result findUserById(@PathVariable String userId) {
@@ -37,7 +40,8 @@ public class AdminUserController {
     }
 
     @PostMapping
-    public Result addUser(@Valid @RequestBody User newUser) {
+    public Result addUser(@Valid @RequestBody CreateUserDTO createUserDTO) {
+        User newUser = this.createUserDTOToUserConverter.convert(createUserDTO);
         User savedUser = this.userService.save(newUser);
         UserDTO savedUserDTO = this.userToUserDTOConverter.convert(savedUser);
         return new Result(true, HttpStatus.OK.value(), "Add Success", savedUserDTO);

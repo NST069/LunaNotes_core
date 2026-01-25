@@ -67,6 +67,8 @@ public class SecurityConfiguration {
                 .authorizeHttpRequests(authorizeRequests -> authorizeRequests
                         .requestMatchers(HttpMethod.POST, this.baseUrl + "/auth/**").permitAll()
                         .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers("/api-docs").permitAll()
+                        .requestMatchers("/swagger-ui**").permitAll()
 
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes").hasAuthority("ROLE_"+ UserRole.USER.name())
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
