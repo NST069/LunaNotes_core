@@ -9,7 +9,7 @@ import com.lunanotes.mapper.NoteDTO;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
-import com.lunanotes.service.NotesDataService;
+import com.lunanotes.service.NoteService;
 import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
 import org.junit.jupiter.api.BeforeEach;
@@ -38,7 +38,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
-class NotesControllerTest {
+class NoteControllerTest {
 
     @Value("${api.endpoint.base-url}")
     String baseUrl;
@@ -47,7 +47,7 @@ class NotesControllerTest {
     MockMvc mockMvc;
 
     @MockitoBean
-    NotesDataService notesDataService;
+    NoteService noteService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -76,7 +76,7 @@ class NotesControllerTest {
 
     @Test
     void findById_ExistingNote_ShouldReturnNote() throws Exception{
-        given(this.notesDataService.findById("1")).willReturn(this.notes.get(0));
+        given(this.noteService.findById("1")).willReturn(this.notes.get(0));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -95,7 +95,7 @@ class NotesControllerTest {
 
     @Test
     void findById_NonExistingNote_ShouldThrowException() throws Exception{
-        given(this.notesDataService.findById("1")).willThrow(new ObjectNotFoundException("note", "1"));
+        given(this.noteService.findById("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -112,7 +112,7 @@ class NotesControllerTest {
 
     @Test
     void findAllNotes_ShouldReturnList() throws Exception {
-        given(this.notesDataService.findAll()).willReturn(this.notes);
+        given(this.noteService.findAll()).willReturn(this.notes);
 
         this.mockMvc.perform(get(baseUrl+"/notes").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -130,7 +130,7 @@ class NotesControllerTest {
         List<Note> filteredNotes = this.notes.stream()
                 .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
 
-        given(this.notesDataService.findByOwnerId("1")).willReturn(filteredNotes);
+        given(this.noteService.findByOwnerId("1")).willReturn(filteredNotes);
 
         this.mockMvc.perform(get(baseUrl+"/notes/user-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -153,7 +153,7 @@ class NotesControllerTest {
         savedNote.setTitle("test");
         savedNote.setContent("lorem ipsum");
 
-        given(this.notesDataService.save(any(Note.class))).willReturn(savedNote);
+        given(this.noteService.save(any(Note.class))).willReturn(savedNote);
 
         this.mockMvc.perform(post(baseUrl+"/notes").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -174,7 +174,7 @@ class NotesControllerTest {
         NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
-        given(this.notesDataService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
+        given(this.noteService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
 
         this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -191,7 +191,7 @@ class NotesControllerTest {
         NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
-        given(this.notesDataService.update(eq("1"), any(Note.class))).willThrow(new ObjectNotFoundException("note", "1"));
+        given(this.noteService.update(eq("1"), any(Note.class))).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -202,7 +202,7 @@ class NotesControllerTest {
 
     @Test
     void deleteNote_ExistingNote_ShouldDelete() throws Exception {
-        doNothing().when(this.notesDataService).delete("1");
+        doNothing().when(this.noteService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -213,7 +213,7 @@ class NotesControllerTest {
 
     @Test
     void deleteNote_NonExistingNote_ShouldThrowException() throws Exception {
-        doThrow(new ObjectNotFoundException("note", "1")).when(this.notesDataService).delete("1");
+        doThrow(new ObjectNotFoundException("note", "1")).when(this.noteService).delete("1");
 
         this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -235,7 +235,7 @@ class NotesControllerTest {
         Set<Tag> tags = Set.of(tag1,tag2);
         notes.get(0).getTags().addAll(tags);
 
-        given(this.notesDataService.getTags("1")).willReturn(this.notes.get(0).getTags());
+        given(this.noteService.getTags("1")).willReturn(this.notes.get(0).getTags());
 
         this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -252,7 +252,7 @@ class NotesControllerTest {
 
     @Test
     void getTags_NonExistingNote_ShouldThrowException() throws Exception {
-        given(this.notesDataService.getTags("1")).willThrow(new ObjectNotFoundException("note", "1"));
+        given(this.noteService.getTags("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -280,7 +280,7 @@ class NotesControllerTest {
         int tagsCount = notes.get(0).getTags().size();
         notes.get(0).getTags().add(tag);
 
-        given(notesDataService.addTag("1", "1")).willReturn(this.notes.get(0));
+        given(noteService.addTag("1", "1")).willReturn(this.notes.get(0));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -295,7 +295,7 @@ class NotesControllerTest {
         AddTagRequest request = new AddTagRequest("1");
         String json = this.objectMapper.writeValueAsString(request);
 
-        given(notesDataService.addTag("1", "1")).willThrow(new ObjectNotFoundException("note", "1"));
+        given(noteService.addTag("1", "1")).willThrow(new ObjectNotFoundException("note", "1"));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
@@ -316,7 +316,7 @@ class NotesControllerTest {
         int tagsCount = notes.get(0).getTags().size();
         notes.get(0).getTags().add(tag);
 
-        given(notesDataService.createAndAddTag(eq("1"), any(CreateTagRequest.class))).willReturn(notes.get(0));
+        given(noteService.createAndAddTag(eq("1"), any(CreateTagRequest.class))).willReturn(notes.get(0));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags/create").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -344,7 +344,7 @@ class NotesControllerTest {
         int tagsCount = notes.get(0).getTags().size();
         notes.get(0).getTags().addAll(tags);
 
-        given(notesDataService.addMultipleTags("1", request.tagIds())).willReturn(notes.get(0));
+        given(noteService.addMultipleTags("1", request.tagIds())).willReturn(notes.get(0));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -366,7 +366,7 @@ class NotesControllerTest {
 
         notes.get(0).removeTag(tag);
 
-        given(notesDataService.removeTag("1", "1")).willReturn(notes.get(0));
+        given(noteService.removeTag("1", "1")).willReturn(notes.get(0));
 
         this.mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
@@ -385,7 +385,7 @@ class NotesControllerTest {
 
         notes.get(0).removeTag(tag);
 
-        given(notesDataService.removeTag("1", "1")).willThrow(new ObjectNotFoundException("tag", "1"));
+        given(noteService.removeTag("1", "1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
         mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))

@@ -3,7 +3,7 @@ package com.lunanotes.security;
 import com.lunanotes.mapper.UserPrincipal;
 import com.lunanotes.mapper.UserToUserDTOConverter;
 import com.lunanotes.model.User;
-import com.lunanotes.service.UsersDataService;
+import com.lunanotes.service.UserService;
 import com.lunanotes.util.Result;
 import com.lunanotes.util.UserRole;
 import jakarta.validation.Valid;
@@ -25,9 +25,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    private final UsersDataService usersDataService;
-
-    private final UserToUserDTOConverter userToUserDTOConverter;
+    private final UserService userService;
 
     @PostMapping("/login")
     public Result getLoginInfo(Authentication authentication) {
@@ -40,7 +38,7 @@ public class AuthController {
     public Result registerUser(@Valid @RequestBody RegistrationRequest registrationRequest) {
         log.debug("Register and login request for username: {}", registrationRequest.username());
 
-        if (usersDataService.existsByUsername(registrationRequest.username())) {
+        if (userService.existsByUsername(registrationRequest.username())) {
             return new Result(false, HttpStatus.CONFLICT.value(),
                     "Username already exists", null);
         }
@@ -52,7 +50,7 @@ public class AuthController {
                 .enabled(true)
                 .roles(UserRole.USER.name())
                 .build();
-        User savedUser = usersDataService.save(newUser);
+        User savedUser = userService.save(newUser);
 
         UserPrincipal userPrincipal = new UserPrincipal(savedUser);
         Authentication authentication = new UsernamePasswordAuthenticationToken(
