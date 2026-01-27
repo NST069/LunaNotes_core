@@ -1,16 +1,15 @@
-package com.lunanotes.mapper;
+package com.lunanotes.mapper.tag;
 
+import com.lunanotes.mapper.user.UserToUserDTOConverter;
 import com.lunanotes.model.Tag;
+import lombok.RequiredArgsConstructor;
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.stereotype.Component;
 
 @Component
+@RequiredArgsConstructor
 public class TagToTagDTOConverter implements Converter<Tag, TagDTO> {
     private final UserToUserDTOConverter userToUserDTOConverter;
-
-    public TagToTagDTOConverter(UserToUserDTOConverter userToUserDTOConverter) {
-        this.userToUserDTOConverter = userToUserDTOConverter;
-    }
 
     @Override
     public TagDTO convert(Tag source) {

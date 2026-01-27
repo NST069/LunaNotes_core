@@ -73,10 +73,6 @@ class UserServiceTest {
         users.add(user3);
     }
 
-    @AfterEach
-    void tearDown() {
-    }
-
     @Test
     void findById_ExistingUser_ShouldReturnUser() {
         User user = User.builder()

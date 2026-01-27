@@ -1,4 +1,4 @@
-package com.lunanotes.mapper;
+package com.lunanotes.mapper.tag;
 
 import com.lunanotes.model.Tag;
 import org.springframework.core.convert.converter.Converter;

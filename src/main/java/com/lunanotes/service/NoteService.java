@@ -2,7 +2,6 @@ package com.lunanotes.service;
 
 import com.lunanotes.exception.ObjectNotFoundException;
 import com.lunanotes.exception.UnauthorizedTagAccessException;
-import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
@@ -13,11 +12,13 @@ import com.lunanotes.util.IdWorker;
 import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.jspecify.annotations.NonNull;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.Set;
 
 @Slf4j
@@ -89,7 +90,7 @@ public class NoteService {
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
     }
 
-    public void delete(String noteId){
+    public void delete(String noteId) {
         Long currentUserId = currentUserService.getCurrentUserId();
         this.noteJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
@@ -97,27 +98,26 @@ public class NoteService {
     }
 
     @PreAuthorize("hasRole('ADMIN', 'MODERATOR')")
-    public void deleteAdmin(String noteId){
+    public void deleteAdmin(String noteId) {
         this.noteJPARepository.findById(noteId)
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
         this.noteJPARepository.deleteById(noteId);
     }
 
-    public Set<Tag> getTags(String noteId){
+    public Set<Tag> getTags(String noteId) {
         Long currentUserId = currentUserService.getCurrentUserId();
         Note note = this.noteJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
         return note.getTags();
     }
 
-    public Note addTag(String noteId, String tagId){
+    public Note addTag(String noteId, String tagName) {
         Long currentUserId = currentUserService.getCurrentUserId();
         Note note = this.noteJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
-        Tag tag = this.tagJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
-                .orElseThrow(()->new ObjectNotFoundException("tag", tagId));
+        Tag tag = checkTagOrCreate(tagName);
         if (!note.getOwner().equals(tag.getOwner())) {
-            throw new UnauthorizedTagAccessException(tagId, noteId);
+            throw new UnauthorizedTagAccessException(tag.getId().toString(), noteId);
         }
 
         note.addTag(tag);
@@ -136,41 +136,14 @@ public class NoteService {
         return noteJPARepository.save(note);
     }
 
-    public Note createAndAddTag(String noteId, CreateTagRequest request){
+    public Note addMultipleTags(String noteId, List<String> tagNames) {
         Long currentUserId = currentUserService.getCurrentUserId();
         Note note = this.noteJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
 
-        Optional<Tag> existingTag = tagJPARepository.findByNameAndOwnerId(
-                request.name(), note.getOwner().getId()
-        );
+        List<Tag> tags = tagNames.stream().map(this::checkTagOrCreate).toList();
 
-        Tag tag;
-        if(existingTag.isPresent()){
-            tag = existingTag.get();
-        }
-        else{
-            tag = Tag.builder()
-                    .name(request.name())
-                    .owner(note.getOwner())
-                    .hexColor(request.hexColor())
-                    .build();
-            tag = tagJPARepository.save(tag);
-        }
-
-        note.addTag(tag);
-        return noteJPARepository.save(note);
-    }
-
-    @Deprecated
-    public Note addMultipleTags(String noteId, List<String> tagIds){
-        Long currentUserId = currentUserService.getCurrentUserId();
-        Note note = this.noteJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
-                .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
-
-        List<Tag> tags = tagJPARepository.findAllById(tagIds);
-
-        if (tags.size() != tagIds.size()) {
+        if (tags.size() != tagNames.size()) {
             log.warn("One or more tags not found");
         }
 
@@ -182,6 +155,34 @@ public class NoteService {
 
         tags.forEach(note::addTag);
         return noteJPARepository.save(note);
+    }
+
+
+    private Tag checkTagOrCreate(String tagName) {
+        User owner = currentUserService.getCurrentUser();
+        Optional<Tag> existingTag = tagJPARepository.findByNameAndOwnerId(
+                tagName, owner.getId()
+        );
+
+        Tag tag;
+        if (existingTag.isPresent()) {
+            tag = existingTag.get();
+        } else {
+            tag = Tag.builder()
+                    .name(tagName)
+                    .owner(owner)
+                    .hexColor(getRandomColor())
+                    .build();
+            tag = tagJPARepository.save(tag);
+        }
+        return tag;
+    }
+
+    private @NonNull String getRandomColor() {
+        Random obj = new Random();
+        int rand_num = obj.nextInt(0xffffff + 1);
+        String colorCode = String.format("#%06x", rand_num);
+        return colorCode;
     }
 
 }

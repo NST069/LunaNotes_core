@@ -1,4 +1,4 @@
-package com.lunanotes.mapper;
+package com.lunanotes.mapper.user;
 
 public record PublicUserDTO(long id,
                             String username,

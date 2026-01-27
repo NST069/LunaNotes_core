@@ -1,8 +1,8 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.user;
 
-import com.lunanotes.controller.docs.PublicUserAPI;
-import com.lunanotes.mapper.PublicUserDTO;
-import com.lunanotes.mapper.UserToPublicUserDTOConverter;
+import com.lunanotes.controller.user.docs.PublicUserAPI;
+import com.lunanotes.mapper.user.PublicUserDTO;
+import com.lunanotes.mapper.user.UserToPublicUserDTOConverter;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
 import com.lunanotes.util.Result;

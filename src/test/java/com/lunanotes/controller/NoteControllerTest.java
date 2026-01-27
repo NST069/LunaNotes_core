@@ -2,10 +2,9 @@ package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.exception.ObjectNotFoundException;
-import com.lunanotes.mapper.AddMultipleTagsRequest;
-import com.lunanotes.mapper.AddTagRequest;
-import com.lunanotes.mapper.CreateTagRequest;
-import com.lunanotes.mapper.NoteDTO;
+import com.lunanotes.mapper.note.AddMultipleTagsRequest;
+import com.lunanotes.mapper.note.AddTagRequest;
+import com.lunanotes.mapper.note.NoteDTO;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
@@ -145,7 +144,7 @@ class NoteControllerTest {
 
     @Test
     void addNote_ShouldSave() throws Exception {
-        NoteDTO noteDTO = new NoteDTO(0, "test", "lorem ipsum", 0, null);
+        NoteDTO noteDTO = new NoteDTO(0, "test", "lorem ipsum", 0, null, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
         Note savedNote = new Note();
@@ -171,7 +170,7 @@ class NoteControllerTest {
         updatedNote.setTitle("test");
         updatedNote.setContent("lorem ipsum2");
 
-        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
+        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
         given(this.noteService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
@@ -188,7 +187,7 @@ class NoteControllerTest {
     @Test
     void updateNote_NonExistingNote_ShouldThrowException() throws Exception {
 
-        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null);
+        NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
         given(this.noteService.update(eq("1"), any(Note.class))).willThrow(new ObjectNotFoundException("note", "1"));
@@ -305,28 +304,6 @@ class NoteControllerTest {
     }
 
     @Test
-    void createAndAddTag_ExistingTag_ShouldAddTag() throws Exception {
-        Tag tag = new Tag();
-        tag.setId(1L);
-        tag.setName("test");
-        tag.setHexColor("#FF0000");
-        CreateTagRequest request = new CreateTagRequest("test", "#FF0000");
-        String json = this.objectMapper.writeValueAsString(request);
-
-        int tagsCount = notes.get(0).getTags().size();
-        notes.get(0).getTags().add(tag);
-
-        given(noteService.createAndAddTag(eq("1"), any(CreateTagRequest.class))).willReturn(notes.get(0));
-
-        mockMvc.perform(post(baseUrl+"/notes/1/tags/create").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("Add Tag Success"))
-                .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+1));
-    }
-
-    @Test
     void addMultipleTags_ShouldAddExistingTags() throws Exception {
         Tag tag1 = new Tag();
         tag1.setId(1L);
@@ -344,7 +321,7 @@ class NoteControllerTest {
         int tagsCount = notes.get(0).getTags().size();
         notes.get(0).getTags().addAll(tags);
 
-        given(noteService.addMultipleTags("1", request.tagIds())).willReturn(notes.get(0));
+        given(noteService.addMultipleTags("1", request.tagNames())).willReturn(notes.get(0));
 
         mockMvc.perform(post(baseUrl+"/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))

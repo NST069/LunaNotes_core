@@ -1,8 +1,8 @@
-package com.lunanotes.mapper;
+package com.lunanotes.mapper.note;
 
 import jakarta.validation.constraints.NotBlank;
 
 public record AddTagRequest(@NotBlank
-                            String tagId) {
+                            String tagName) {
 
 }

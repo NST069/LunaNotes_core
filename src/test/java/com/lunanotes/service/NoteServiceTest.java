@@ -1,7 +1,6 @@
 package com.lunanotes.service;
 
 import com.lunanotes.exception.ObjectNotFoundException;
-import com.lunanotes.mapper.CreateTagRequest;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
@@ -20,7 +19,6 @@ import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.context.ActiveProfiles;
-import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.*;
 
@@ -82,10 +80,6 @@ class NoteServiceTest {
                 .build();
 
         this.notes = List.of(note1, note2, note3);
-    }
-
-    @AfterEach
-    void tearDown() {
     }
 
     @Test
@@ -306,37 +300,41 @@ class NoteServiceTest {
     @Test
     void addTag_ExistingTag_ShouldAddTag() {
         given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(currentUserService.getCurrentUser()).willReturn(this.users.get(0));
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
         tag.setOwner(users.get(0));
 
         given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
-        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(tag));
+        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.of(tag));
 
-        noteService.addTag("1", "1");
+        noteService.addTag("1", tag.getName());
 
         assertThat(notes.get(0).getTags()).contains(tag);
 
-        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
         verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
     @Test
-    void addTag_NonExistingTag_ShouldThrowException() {
+    void addTag_NonExistingTag_ShouldCreateAndAddTag() {
         given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+        Tag tag = new Tag();
+        tag.setId(1L);
+        tag.setName("test");
+        tag.setOwner(users.get(0));
+
         given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
-        given(tagJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.empty());
+        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.empty());
+        given(tagJPARepository.save(any(Tag.class))).willReturn(tag);
 
-        Throwable thrown = assertThrows(ObjectNotFoundException.class, () -> {
-            noteService.addTag("1", "1");
-        });
+        noteService.addTag("1", "test");
 
-        AssertionsForClassTypes.assertThat(thrown)
-                .isInstanceOf(ObjectNotFoundException.class)
-                .hasMessage("Could not find tag with Id 1");
+        assertThat(notes.get(0).getTags()).contains(tag);
 
-        verify(tagJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
+        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
         verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
     }
 
@@ -378,47 +376,9 @@ class NoteServiceTest {
     }
 
     @Test
-    void createAndAddTag_ExistingTag_ShouldAddTag() {
-        given(currentUserService.getCurrentUserId()).willReturn(1L);
-        Tag tag = new Tag();
-        tag.setId(1L);
-        tag.setName("test");
-        tag.setOwner(users.get(0));
-
-        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
-        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.of(tag));
-
-        noteService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
-
-        assertThat(notes.get(0).getTags()).contains(tag);
-
-        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
-        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
-    }
-
-    @Test
-    void createAndAddTag_NonExistingTag_ShouldCreateAndAddTag() {
-        given(currentUserService.getCurrentUserId()).willReturn(1L);
-        Tag tag = new Tag();
-        tag.setId(1L);
-        tag.setName("test");
-        tag.setOwner(users.get(0));
-
-        given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
-        given(tagJPARepository.findByNameAndOwnerId("test", 1L)).willReturn(Optional.empty());
-        given(tagJPARepository.save(any(Tag.class))).willReturn(tag);
-
-        noteService.createAndAddTag("1", new CreateTagRequest("test", "#00FFFF"));
-
-        assertThat(notes.get(0).getTags()).contains(tag);
-
-        verify(tagJPARepository, times(1)).findByNameAndOwnerId("test", 1L);
-        verify(noteJPARepository, times(1)).findByIdAndOwnerId(1L, 1L);
-    }
-
-    @Test
     void addMultipleTags_ShouldAddExistingTags() {
         given(currentUserService.getCurrentUserId()).willReturn(1L);
+        given(currentUserService.getCurrentUser()).willReturn(this.users.get(0));
         Tag tag1 = Tag.builder()
                 .id(1L)
                 .name("cats")
@@ -438,9 +398,11 @@ class NoteServiceTest {
         List<Tag> tags = List.of(tag1, tag2, tag3);
 
         given(noteJPARepository.findByIdAndOwnerId(1L, 1L)).willReturn(Optional.of(notes.get(0)));
-        given(tagJPARepository.findAllById(List.of("1", "2", "3"))).willReturn(tags);
+        given(tagJPARepository.findByNameAndOwnerId("cats", 1L)).willReturn(Optional.of(tag1));
+        given(tagJPARepository.findByNameAndOwnerId("dogs", 1L)).willReturn(Optional.of(tag2));
+        given(tagJPARepository.findByNameAndOwnerId("important", 1L)).willReturn(Optional.of(tag3));
 
-        noteService.addMultipleTags("1", List.of("1", "2", "3"));
+        noteService.addMultipleTags("1", tags.stream().map(Tag::getName).toList());
 
         assertThat(notes.get(0).getTags()).containsAll(tags);
 

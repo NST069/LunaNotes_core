@@ -2,8 +2,8 @@ package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.exception.ObjectNotFoundException;
-import com.lunanotes.mapper.CreateUserDTO;
-import com.lunanotes.mapper.UpdateUserDTO;
+import com.lunanotes.mapper.user.CreateUserDTO;
+import com.lunanotes.mapper.user.UpdateUserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
 import com.lunanotes.util.UserRole;
@@ -21,7 +21,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
-import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 

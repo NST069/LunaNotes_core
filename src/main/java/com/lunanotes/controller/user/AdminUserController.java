@@ -1,7 +1,7 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.user;
 
-import com.lunanotes.controller.docs.AdminUserAPI;
-import com.lunanotes.mapper.*;
+import com.lunanotes.controller.user.docs.AdminUserAPI;
+import com.lunanotes.mapper.user.*;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
 import com.lunanotes.util.Result;

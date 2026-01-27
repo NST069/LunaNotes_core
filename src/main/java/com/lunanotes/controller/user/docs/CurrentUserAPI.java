@@ -1,6 +1,6 @@
-package com.lunanotes.controller.docs;
+package com.lunanotes.controller.user.docs;
 
-import com.lunanotes.mapper.UpdateUserDTO;
+import com.lunanotes.mapper.user.UpdateUserDTO;
 import com.lunanotes.util.Result;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

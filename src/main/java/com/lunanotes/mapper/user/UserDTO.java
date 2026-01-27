@@ -1,4 +1,4 @@
-package com.lunanotes.mapper;
+package com.lunanotes.mapper.user;
 
 import java.time.LocalDateTime;
 

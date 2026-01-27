@@ -1,7 +1,7 @@
 package com.lunanotes.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.lunanotes.mapper.UpdateUserDTO;
+import com.lunanotes.mapper.user.UpdateUserDTO;
 import com.lunanotes.model.User;
 import com.lunanotes.security.CurrentUserService;
 import com.lunanotes.service.UserService;

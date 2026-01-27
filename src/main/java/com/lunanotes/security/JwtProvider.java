@@ -1,6 +1,6 @@
 package com.lunanotes.security;
 
-import com.lunanotes.mapper.UserPrincipal;
+import com.lunanotes.mapper.user.UserPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.GrantedAuthority;

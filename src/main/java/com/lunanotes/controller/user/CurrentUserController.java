@@ -1,7 +1,10 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.user;
 
-import com.lunanotes.controller.docs.CurrentUserAPI;
-import com.lunanotes.mapper.*;
+import com.lunanotes.controller.user.docs.CurrentUserAPI;
+import com.lunanotes.mapper.user.UpdateUserDTO;
+import com.lunanotes.mapper.user.UpdateUserDTOToUserConverter;
+import com.lunanotes.mapper.user.UserDTO;
+import com.lunanotes.mapper.user.UserToUserDTOConverter;
 import com.lunanotes.model.User;
 import com.lunanotes.security.CurrentUserService;
 import com.lunanotes.service.UserService;

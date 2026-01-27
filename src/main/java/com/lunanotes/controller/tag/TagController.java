@@ -1,8 +1,8 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.tag;
 
-import com.lunanotes.mapper.TagDTO;
-import com.lunanotes.mapper.TagDTOToTagConverter;
-import com.lunanotes.mapper.TagToTagDTOConverter;
+import com.lunanotes.mapper.tag.TagDTO;
+import com.lunanotes.mapper.tag.TagDTOToTagConverter;
+import com.lunanotes.mapper.tag.TagToTagDTOConverter;
 import com.lunanotes.model.Tag;
 import com.lunanotes.service.TagService;
 import com.lunanotes.util.Result;

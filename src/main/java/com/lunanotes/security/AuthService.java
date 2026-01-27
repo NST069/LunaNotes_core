@@ -1,8 +1,8 @@
 package com.lunanotes.security;
 
-import com.lunanotes.mapper.UserDTO;
-import com.lunanotes.mapper.UserPrincipal;
-import com.lunanotes.mapper.UserToUserDTOConverter;
+import com.lunanotes.mapper.user.UserDTO;
+import com.lunanotes.mapper.user.UserPrincipal;
+import com.lunanotes.mapper.user.UserToUserDTOConverter;
 import com.lunanotes.model.User;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.Authentication;

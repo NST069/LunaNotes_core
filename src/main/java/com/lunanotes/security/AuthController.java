@@ -1,7 +1,6 @@
 package com.lunanotes.security;
 
-import com.lunanotes.mapper.UserPrincipal;
-import com.lunanotes.mapper.UserToUserDTOConverter;
+import com.lunanotes.mapper.user.UserPrincipal;
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;
 import com.lunanotes.util.Result;

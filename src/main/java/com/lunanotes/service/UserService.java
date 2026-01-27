@@ -1,7 +1,7 @@
 package com.lunanotes.service;
 
 import com.lunanotes.exception.ObjectNotFoundException;
-import com.lunanotes.mapper.UserPrincipal;
+import com.lunanotes.mapper.user.UserPrincipal;
 import com.lunanotes.model.User;
 import com.lunanotes.repository.UserJPARepository;
 import jakarta.transaction.Transactional;

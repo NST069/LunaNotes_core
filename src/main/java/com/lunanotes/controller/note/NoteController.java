@@ -1,6 +1,7 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.note;
 
-import com.lunanotes.mapper.*;
+import com.lunanotes.mapper.note.*;
+import com.lunanotes.mapper.tag.*;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.service.NoteService;
@@ -81,21 +82,14 @@ public class NoteController {
 
     @PostMapping("/{noteId}/tags")
     public Result addTag(@PathVariable String noteId, @RequestBody AddTagRequest request) {
-        Note note = noteService.addTag(noteId, request.tagId());
-        NoteDTO noteDTO = this.noteToNoteDTOConverter.convert(note);
-        return new Result(true, HttpStatus.OK.value(), "Add Tag Success", noteDTO);
-    }
-
-    @PostMapping("/{noteId}/tags/create")
-    public Result createAndAddTag(@PathVariable String noteId, @RequestBody CreateTagRequest request) {
-        Note note = noteService.createAndAddTag(noteId, request);
+        Note note = noteService.addTag(noteId, request.tagName());
         NoteDTO noteDTO = this.noteToNoteDTOConverter.convert(note);
         return new Result(true, HttpStatus.OK.value(), "Add Tag Success", noteDTO);
     }
 
     @PostMapping("/{noteId}/tags/batch")
     public Result addMultipleTags(@PathVariable String noteId, @RequestBody AddMultipleTagsRequest request) {
-        Note note = noteService.addMultipleTags(noteId, request.tagIds());
+        Note note = noteService.addMultipleTags(noteId, request.tagNames());
         NoteDTO noteDTO = this.noteToNoteDTOConverter.convert(note);
         return new Result(true, HttpStatus.OK.value(), "Add Multiple Tags Success", noteDTO);
     }
