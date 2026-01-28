@@ -1,4 +1,4 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.user;
 
 import com.lunanotes.model.User;
 import com.lunanotes.service.UserService;

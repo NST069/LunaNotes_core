@@ -1,4 +1,4 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.model.User;
@@ -55,7 +55,7 @@ class CurrentUserControllerIntegrationTest {
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         JSONObject json = new JSONObject(content);
-        this.token = "Bearer "+json.getJSONObject("data").getString("token");
+        this.token = "Bearer " + json.getJSONObject("data").getString("token");
         System.out.println(this.token);
     }
 

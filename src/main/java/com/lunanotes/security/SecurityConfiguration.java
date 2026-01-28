@@ -73,6 +73,7 @@ public class SecurityConfiguration {
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes").hasAuthority("ROLE_"+ UserRole.USER.name())
                         .requestMatchers(HttpMethod.GET, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
                         .requestMatchers(HttpMethod.POST, this.baseUrl + "/notes").hasAuthority("ROLE_"+ UserRole.USER.name())
+                        .requestMatchers(HttpMethod.POST, this.baseUrl + "/notes/me").access(this.userRequestAuthorizationManager)
                         .requestMatchers(HttpMethod.PUT, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
                         .requestMatchers(HttpMethod.DELETE, this.baseUrl + "/notes/**").access(this.userRequestAuthorizationManager)
 

@@ -1,4 +1,4 @@
-/*package com.lunanotes.controller;
+package com.lunanotes.controller.note;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.exception.ObjectNotFoundException;
@@ -8,6 +8,7 @@ import com.lunanotes.mapper.note.NoteDTO;
 import com.lunanotes.model.Note;
 import com.lunanotes.model.Tag;
 import com.lunanotes.model.User;
+import com.lunanotes.security.CurrentUserService;
 import com.lunanotes.service.NoteService;
 import com.lunanotes.util.UserRole;
 import org.hamcrest.Matchers;
@@ -24,7 +25,10 @@ import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.MockMvc;
 
 import java.time.LocalDateTime;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Objects;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -32,14 +36,15 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.doNothing;
 import static org.mockito.Mockito.doThrow;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.delete;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 
 @SpringBootTest
 @AutoConfigureMockMvc(addFilters = false)
 @ActiveProfiles("test")
-class NoteControllerTest {
+class CurrentNoteControllerTest {
 
-    @Value("${api.endpoint.base-url}")
+    @Value("${api.endpoint.base-url}/notes/me")
     String baseUrl;
 
     @Autowired
@@ -47,6 +52,9 @@ class NoteControllerTest {
 
     @MockitoBean
     NoteService noteService;
+
+    @MockitoBean
+    CurrentUserService currentUserService;
 
     @Autowired
     ObjectMapper objectMapper;
@@ -57,34 +65,42 @@ class NoteControllerTest {
 
     @BeforeEach
     void setUp() {
-        User user = User.builder()
+        User user1 = User.builder()
                 .id(1L)
                 .username("JohnDoe")
                 .password("password")
                 .roles(UserRole.USER.name())
                 .build();
+        User user2 = User.builder()
+                .id(2L)
+                .username("JohnDoe")
+                .password("password")
+                .roles(UserRole.USER.name())
+                .build();
         this.users = new ArrayList<>();
-        this.users.add(user);
+        this.users.add(user1);
+        this.users.add(user2);
         this.notes = new ArrayList<>();
-        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
-        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false,  null, new HashSet<>()));
-        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
-        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user, new HashSet<>()));
-        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, null, new HashSet<>()));
+        notes.add(new Note(1L, "test1", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user1, new HashSet<>()));
+        notes.add(new Note(2L, "test2", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user2, new HashSet<>()));
+        notes.add(new Note(3L, "test3", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user1, new HashSet<>()));
+        notes.add(new Note(4L, "test4", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user1, new HashSet<>()));
+        notes.add(new Note(5L, "test5", "lorem ipsum", LocalDateTime.now(), LocalDateTime.now(), false, user2, new HashSet<>()));
     }
 
     @Test
-    void findById_ExistingNote_ShouldReturnNote() throws Exception{
+    void findNoteById_ExistingNote_ShouldReturnNote() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
         given(this.noteService.findById("1")).willReturn(this.notes.get(0));
 
-        this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
                 .andExpect(jsonPath("$.data.title").value("test1"));
 
-        this.mockMvc.perform(get(baseUrl+"/notes/note-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/note-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find One Success"))
@@ -93,16 +109,16 @@ class NoteControllerTest {
     }
 
     @Test
-    void findById_NonExistingNote_ShouldThrowException() throws Exception{
+    void findNoteById_NonExistingNote_ShouldThrowException() throws Exception {
         given(this.noteService.findById("1")).willThrow(new ObjectNotFoundException("note", "1"));
 
-        this.mockMvc.perform(get(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
 
-        this.mockMvc.perform(get(baseUrl+"/notes/note-1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(get(baseUrl + "/note-1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -111,31 +127,18 @@ class NoteControllerTest {
 
     @Test
     void findAllNotes_ShouldReturnList() throws Exception {
-        given(this.noteService.findAll()).willReturn(this.notes);
+        given(this.currentUserService.getCurrentUserId()).willReturn(this.users.get(0).getId());
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
 
-        this.mockMvc.perform(get(baseUrl+"/notes").accept(MediaType.APPLICATION_JSON))
+        List<Note> myNotes = this.notes.stream().filter(note -> Objects.equals(note.getOwner().getId(), this.users.get(0).getId())).toList();
+
+        given(this.noteService.findAll()).willReturn(myNotes);
+
+        this.mockMvc.perform(get(baseUrl).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Find All Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(this.notes.size())))
-                .andExpect(jsonPath("$.data[0].id").value("1"))
-                .andExpect(jsonPath("$.data[0].title").value("test1"))
-                .andExpect(jsonPath("$.data[1].id").value("2"))
-                .andExpect(jsonPath("$.data[1].title").value("test2"));
-    }
-
-    @Test
-    void findAllNotesByUserId_ShouldReturnList() throws Exception {
-        List<Note> filteredNotes = this.notes.stream()
-                .filter(note -> ((note.getOwner() != null) ? note.getOwner().getId() : 0) == 1).toList();
-
-        given(this.noteService.findByOwnerId("1")).willReturn(filteredNotes);
-
-        this.mockMvc.perform(get(baseUrl+"/notes/user-1").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("Find All For User Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(filteredNotes.size())))
+                .andExpect(jsonPath("$.data", Matchers.hasSize(myNotes.size())))
                 .andExpect(jsonPath("$.data[0].id").value("1"))
                 .andExpect(jsonPath("$.data[0].title").value("test1"))
                 .andExpect(jsonPath("$.data[1].id").value("3"))
@@ -144,6 +147,8 @@ class NoteControllerTest {
 
     @Test
     void addNote_ShouldSave() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         NoteDTO noteDTO = new NoteDTO(0, "test", "lorem ipsum", 0, null, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
@@ -154,7 +159,7 @@ class NoteControllerTest {
 
         given(this.noteService.save(any(Note.class))).willReturn(savedNote);
 
-        this.mockMvc.perform(post(baseUrl+"/notes").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(post(baseUrl).contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Success"))
@@ -165,6 +170,8 @@ class NoteControllerTest {
 
     @Test
     void updateNote_ExistingNote_ShouldUpdate() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         Note updatedNote = new Note();
         updatedNote.setId(1L);
         updatedNote.setTitle("test");
@@ -175,7 +182,7 @@ class NoteControllerTest {
 
         given(this.noteService.update(eq("1"), any(Note.class))).willReturn(updatedNote);
 
-        this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl + "/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -186,13 +193,14 @@ class NoteControllerTest {
 
     @Test
     void updateNote_NonExistingNote_ShouldThrowException() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
 
         NoteDTO noteDTO = new NoteDTO(1, "test", "lorem ipsum2", 0, null, null);
         String json = this.objectMapper.writeValueAsString(noteDTO);
 
         given(this.noteService.update(eq("1"), any(Note.class))).willThrow(new ObjectNotFoundException("note", "1"));
 
-        this.mockMvc.perform(put(baseUrl+"/notes/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(put(baseUrl + "/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -201,9 +209,11 @@ class NoteControllerTest {
 
     @Test
     void deleteNote_ExistingNote_ShouldDelete() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         doNothing().when(this.noteService).delete("1");
 
-        this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Delete Success"))
@@ -214,7 +224,7 @@ class NoteControllerTest {
     void deleteNote_NonExistingNote_ShouldThrowException() throws Exception {
         doThrow(new ObjectNotFoundException("note", "1")).when(this.noteService).delete("1");
 
-        this.mockMvc.perform(delete(baseUrl+"/notes/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl + "/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -222,52 +232,9 @@ class NoteControllerTest {
     }
 
     @Test
-    void getTags_ExistingNote_ShouldReturnTagsList() throws Exception {
-        Tag tag1 = new Tag();
-        tag1.setId(1L);
-        tag1.setName("test1");
-        tag1.setHexColor("#00FFFF");
-        Tag tag2 = new Tag();
-        tag2.setId(2L);
-        tag2.setName("test2");
-        tag2.setHexColor("#00FFFF");
-        Set<Tag> tags = Set.of(tag1,tag2);
-        notes.get(0).getTags().addAll(tags);
+    void addTag_ExistingNote_ShouldAddTag() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
 
-        given(this.noteService.getTags("1")).willReturn(this.notes.get(0).getTags());
-
-        this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("Get Tags Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(tags.size())));
-
-        this.mockMvc.perform(get(baseUrl+"/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(true))
-                .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
-                .andExpect(jsonPath("$.message").value("Get Tags Success"))
-                .andExpect(jsonPath("$.data", Matchers.hasSize(tags.size())));
-    }
-
-    @Test
-    void getTags_NonExistingNote_ShouldThrowException() throws Exception {
-        given(this.noteService.getTags("1")).willThrow(new ObjectNotFoundException("note", "1"));
-
-        this.mockMvc.perform(get(baseUrl+"/notes/1/tags").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(false))
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
-                .andExpect(jsonPath("$.data").isEmpty());
-
-        this.mockMvc.perform(get(baseUrl+"/notes/note-1/tags").accept(MediaType.APPLICATION_JSON))
-                .andExpect(jsonPath("$.flag").value(false))
-                .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
-                .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
-                .andExpect(jsonPath("$.data").isEmpty());
-    }
-
-    @Test
-    void addTag_ExistingNote_ShouldAddTag() throws Exception{
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
@@ -281,22 +248,24 @@ class NoteControllerTest {
 
         given(noteService.addTag("1", "1")).willReturn(this.notes.get(0));
 
-        mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl + "/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Tag Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+1));
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount + 1));
     }
 
     @Test
-    void addTag_NonExistingNote_ShouldThrowException() throws Exception{
+    void addTag_NonExistingNote_ShouldThrowException() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         AddTagRequest request = new AddTagRequest("1");
         String json = this.objectMapper.writeValueAsString(request);
 
         given(noteService.addTag("1", "1")).willThrow(new ObjectNotFoundException("note", "1"));
 
-        mockMvc.perform(post(baseUrl+"/notes/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl + "/1/tags").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find note with Id 1"))
@@ -304,7 +273,9 @@ class NoteControllerTest {
     }
 
     @Test
-    void addMultipleTags_ShouldAddExistingTags() throws Exception {
+    void addMultipleTags_ShouldAddTags() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         Tag tag1 = new Tag();
         tag1.setId(1L);
         tag1.setName("test");
@@ -323,16 +294,18 @@ class NoteControllerTest {
 
         given(noteService.addMultipleTags("1", request.tagNames())).willReturn(notes.get(0));
 
-        mockMvc.perform(post(baseUrl+"/notes/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(post(baseUrl + "/1/tags/batch").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Add Multiple Tags Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount+tags.size()));
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount + tags.size()));
     }
 
     @Test
     void removeTag_ExistingTag_ShouldDeleteTag() throws Exception {
+        given(this.currentUserService.getCurrentUser()).willReturn(this.users.get(0));
+
         Tag tag = new Tag();
         tag.setId(1L);
         tag.setName("test");
@@ -345,12 +318,12 @@ class NoteControllerTest {
 
         given(noteService.removeTag("1", "1")).willReturn(notes.get(0));
 
-        this.mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+        this.mockMvc.perform(delete(baseUrl + "/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Remove Tag Success"))
                 .andExpect(jsonPath("$.data.id").value("1"))
-                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount-1));
+                .andExpect(jsonPath("$.data.numberOfTags").value(tagsCount - 1));
     }
 
     @Test
@@ -364,10 +337,10 @@ class NoteControllerTest {
 
         given(noteService.removeTag("1", "1")).willThrow(new ObjectNotFoundException("tag", "1"));
 
-        mockMvc.perform(delete(baseUrl+"/notes/1/tags/1").accept(MediaType.APPLICATION_JSON))
+        mockMvc.perform(delete(baseUrl + "/1/tags/1").accept(MediaType.APPLICATION_JSON))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find tag with Id 1"))
                 .andExpect(jsonPath("$.data").isEmpty());
     }
-}*/
+}

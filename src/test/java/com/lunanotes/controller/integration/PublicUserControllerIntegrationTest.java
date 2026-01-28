@@ -1,4 +1,4 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.integration;
 
 import org.json.JSONObject;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,13 +50,13 @@ class PublicUserControllerIntegrationTest {
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         JSONObject json = new JSONObject(content);
-        this.token = "Bearer "+json.getJSONObject("data").getString("token");
+        this.token = "Bearer " + json.getJSONObject("data").getString("token");
         System.out.println(this.token);
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void findUserById_ExistingUser_ShouldReturnUser() throws Exception{
+    void findUserById_ExistingUser_ShouldReturnUser() throws Exception {
         this.mockMvc.perform(get(this.baseUrl + "/1").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
@@ -65,8 +65,8 @@ class PublicUserControllerIntegrationTest {
     }
 
     @Test
-    void findUserById_NonExistingUser_ShouldThrowException() throws Exception{
-        this.mockMvc.perform(get(baseUrl+"/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+    void findUserById_NonExistingUser_ShouldThrowException() throws Exception {
+        this.mockMvc.perform(get(baseUrl + "/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 9999"))

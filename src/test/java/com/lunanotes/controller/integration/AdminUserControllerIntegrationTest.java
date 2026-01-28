@@ -1,4 +1,4 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.integration;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.model.User;
@@ -56,13 +56,13 @@ class AdminUserControllerIntegrationTest {
         MvcResult mvcResult = resultActions.andDo(print()).andReturn();
         String content = mvcResult.getResponse().getContentAsString();
         JSONObject json = new JSONObject(content);
-        this.token = "Bearer "+json.getJSONObject("data").getString("token");
+        this.token = "Bearer " + json.getJSONObject("data").getString("token");
         System.out.println(this.token);
     }
 
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
-    void findUserById_ExistingUser_ShouldReturnUser() throws Exception{
+    void findUserById_ExistingUser_ShouldReturnUser() throws Exception {
         this.mockMvc.perform(get(this.baseUrl + "/2").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
@@ -71,8 +71,8 @@ class AdminUserControllerIntegrationTest {
     }
 
     @Test
-    void findUserById_NonExistingUser_ShouldThrowException() throws Exception{
-        this.mockMvc.perform(get(baseUrl+"/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+    void findUserById_NonExistingUser_ShouldThrowException() throws Exception {
+        this.mockMvc.perform(get(baseUrl + "/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 9999"))
@@ -122,7 +122,7 @@ class AdminUserControllerIntegrationTest {
 
         String json = this.objectMapper.writeValueAsString(user);
 
-        this.mockMvc.perform(put(baseUrl+"/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(put(baseUrl + "/1").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(true))
                 .andExpect(jsonPath("$.code").value(HttpStatus.OK.value()))
                 .andExpect(jsonPath("$.message").value("Update Success"))
@@ -140,7 +140,7 @@ class AdminUserControllerIntegrationTest {
 
         String json = this.objectMapper.writeValueAsString(user);
 
-        this.mockMvc.perform(put(baseUrl+"/9999").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(put(baseUrl + "/9999").contentType(MediaType.APPLICATION_JSON).content(json).accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 9999"))
@@ -164,7 +164,7 @@ class AdminUserControllerIntegrationTest {
     @Test
     @DirtiesContext(methodMode = DirtiesContext.MethodMode.BEFORE_METHOD)
     void deleteUser_NonExistingUser_ShouldThrowException() throws Exception {
-        this.mockMvc.perform(delete(baseUrl+"/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
+        this.mockMvc.perform(delete(baseUrl + "/9999").accept(MediaType.APPLICATION_JSON).header(HttpHeaders.AUTHORIZATION, this.token))
                 .andExpect(jsonPath("$.flag").value(false))
                 .andExpect(jsonPath("$.code").value(HttpStatus.NOT_FOUND.value()))
                 .andExpect(jsonPath("$.message").value("Could not find user with Id 9999"))

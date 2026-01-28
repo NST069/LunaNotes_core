@@ -40,9 +40,18 @@ public class NoteService {
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
     }
 
+    public Note findPublicById(String noteId) {
+        return this.noteJPARepository.findByIdAndIsPublic(Long.parseLong(noteId), true)
+                .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
+    }
+
     public List<Note> findAll() {
         Long currentUserId = currentUserService.getCurrentUserId();
         return this.noteJPARepository.findByOwnerId(currentUserId);
+    }
+
+    public List<Note> findAllPublic(String ownerId) {
+        return this.noteJPARepository.findByOwnerIdAndIsPublic(Long.parseLong(ownerId), true);
     }
 
     @PreAuthorize("hasRole('ADMIN')")
@@ -130,6 +139,18 @@ public class NoteService {
                 .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
 
         Tag tag = tagJPARepository.findByIdAndOwnerId(Long.parseLong(noteId), currentUserId)
+                .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
+
+        note.removeTag(tag);
+        return noteJPARepository.save(note);
+    }
+
+    @PreAuthorize("hasRole('ADMIN', 'MODERATOR')")
+    public Note removeTagAdmin(String noteId, String tagId) {
+        Note note = this.noteJPARepository.findById(noteId)
+                .orElseThrow(() -> new ObjectNotFoundException("note", noteId));
+
+        Tag tag = tagJPARepository.findById(noteId)
                 .orElseThrow(() -> new ObjectNotFoundException("tag", tagId));
 
         note.removeTag(tag);

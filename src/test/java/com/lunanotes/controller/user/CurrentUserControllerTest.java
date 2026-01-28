@@ -1,4 +1,4 @@
-package com.lunanotes.controller;
+package com.lunanotes.controller.user;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.lunanotes.mapper.user.UpdateUserDTO;

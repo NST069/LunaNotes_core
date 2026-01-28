@@ -14,7 +14,11 @@ public interface NoteJPARepository extends JpaRepository<Note, String> {
 
     Optional<Note> findByTitleAndOwnerId(String title, Long ownerId);
 
+    Optional<Note> findByIdAndIsPublic(Long noteId, boolean isPublic);
+
     List<Note> findByOwnerId(Long ownerId);
+
+    List<Note> findByOwnerIdAndIsPublic(Long ownerId, boolean isPublic);
 
     List<Note> findByTagsId(Long tagId);
 
